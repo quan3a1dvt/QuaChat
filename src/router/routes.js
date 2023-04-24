@@ -1,5 +1,6 @@
 import RoomLayout from '../layouts/RoomLayout.vue'
 import LoginLayout from '../layouts/LoginLayout.vue'
+import DummyLayout from '../layouts/DummyLayout.vue'
 const routes = [
   {
     path: '/',
@@ -15,6 +16,12 @@ const routes = [
     name: 'RoomLayout',
     props: true,
     component: RoomLayout
+  },
+  {
+    path: '/dummy',
+    name: 'DummyLayout',
+    props: true,
+    component: DummyLayout
   },
   // {
   //   path: '/room',

@@ -132,7 +132,10 @@ export const useMainStore = defineStore('main', {
             let Msg = this.rooms.get(msg.to).messages.find(obj => {
               return obj.id == msg.id
             })
-            Msg.status = 'sent'
+            Msg.sent = true
+            if (Msg.type != 'text') {
+              Msg.file = msg.file
+            }
           }
 
         }

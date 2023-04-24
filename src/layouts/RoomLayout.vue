@@ -14,7 +14,7 @@ import SocketioService from '../services/socketio.service.js';
 import EmojiPicker from 'vue3-emoji-picker'
 import 'vue3-emoji-picker/css'
 import dateFormat, { masks } from "dateformat";
-
+import { getCssVar } from 'quasar'
 const route = useRoute()
 const store = SocketioService.getStore()
 const Id = route.params.id
@@ -50,7 +50,7 @@ const test = (() => {
     setTimeout(() => {
         console.log(store.rooms)
         test()
-    }, 1000);
+    }, 3000);
 })
 // test()
 
@@ -78,63 +78,73 @@ const getShortTimeFormat = ((time) => {
     else { return dateFormat(target, 'mmm d')}
 })
 
+
+const qFileInput = ref(null)
+const getFile = (() => {
+    qFileInput.value.$el.click()
+})
+
+const inputFiles = ref([])
+
 const inputMessageText = ref('')
 const replyMsg = ref(null)
 const onSelectEmoji = ((emoji) => {
     inputMessageText.value = inputMessageText.value + emoji.i
 })
 const submitMessage = (async () => {
-//   showUpload.value = false
-//   if (inputMessageText.value == "") {
-//     if (files.value == null) {
-//       return
-//     }
-//   }
-//   if (files.value != null) {
-//     for (let file of files.value) {
-//       let createon = Date.now()
-//       let file_id = createon
-//       SocketioService.upload(file, selectedRoomId.value, file_id, {
-//         id: file_id,
-//         from: id,
-//         to: selectedRoomId.value,
-//         createon: createon,
-//         isPreview: true,
-//         type: file.type.startsWith('image') ? 'image' : (file.type.startsWith('video') ? 'video' : 'file'),
-//         file: {
-//           name: file.name,
-//           src: URL.createObjectURL(file),
-//           id: file_id,
-//           type: file.type,
-//           size: file.size,
-//           progress: 0,
-//         },
-//         reply: replyMsg.value != null ? replyMsg.value : null
-//       })
-//     }
-//   }
+  if (inputFiles.value.length > 0) {
+    for (let file of inputFiles.value) {
+      let createon = Date.now()
+      let fileId = createon
+      let msg = {
+        id: fileId,
+        from: Id,
+        to: currentRoomId.value,
+        createon: createon,
+        sent: false,
+        type: file.type.startsWith('image') ? 'image' : (file.type.startsWith('video') ? 'video' : 'document'),
+        file: {
+          name: file.name,
+          src: URL.createObjectURL(file),
+          id: fileId,
+          type: file.type,
+          size: file.size,
+          progress: 0,
+        },
+        reply: replyMsg.value != null ? replyMsg.value : null
+      }
+      store.addMessages([msg])
+      SocketioService.upload(file, currentRoomId.value, fileId, msg)
+    }
+  }
   let createon = Date.now()
   let id = createon
   if (inputMessageText.value != "") {
-    SocketioService.sendMessage({
+    let msg = {
       id: id,
       from: Id,
       to: currentRoomId.value,
       createon: createon,
-      status: 'pending',
+      sent: false,
       type: 'text',
       content: inputMessageText.value,
-      reply: replyMsg.value != null ? replyMsg.value : null
-    })
+      replyMsg: replyMsg.value != null ? replyMsg.value : null
+    }
+    store.addMessages([msg])
+    SocketioService.sendMessage(msg)
   }
 
   inputMessageText.value = ''
   replyMsg.value = null
+  inputFiles.value = []
 //   files.value = null
   // observeHeight()
 })
 
-
+const showMsgMenu = ref(false)
+const setReplyMsg = ((msg) => {
+    replyMsg.value = JSON.parse(JSON.stringify(msg))
+})
 const leftDrawerOpen = ref(true)
 const search = ref('')
 const message = ref('')
@@ -147,7 +157,18 @@ const style = computed(() => ({
 function toggleLeftDrawer() {
     leftDrawerOpen.value = !leftDrawerOpen.value
 }
+console.log(getCssVar('primary'))
+const thumbStyle = {
+    borderRadius: '5px',
+    height: '7px',
+    opacity: '0.5'
+}
 
+const barStyle = {
+    borderRadius: '9px',
+    height: '7px',
+    opacity: '0.2'
+}
 
 </script>
 
@@ -308,33 +329,84 @@ function toggleLeftDrawer() {
 
         <q-page-container class="bg-grey-2">
             <q-page>
-                <div class="q-pa-md row justify-center" v-if="currentRoom != null">
-                    <div style="width: 100%;">
-                    <div v-for="(messageGroup, index) in currentRoom.messagesGroup" :key="index">
-                    <q-chat-message
-                        v-if="messageGroup[0].from == Id"
-                        stamp="7 minutes ago"
-                        sent
-                        bg-color="green-2"
-                    >
-                        <div v-for="(message, idx) in messageGroup" :key="idx">
-                            <div v-if="message.type == 'text'">{{ message.content }}</div>
+                
+                <div style="width: 100%;" class="q-pa-md justify-center" v-if="currentRoom != null">
+                    <q-infinite-scroll @load="onLoad" reverse>
+
+                        <div  v-for="(messageGroup, index) in currentRoom.messagesGroup" :key="index">
+
+                            <q-chat-message
+                                @dblclick="showMsgMenu = true"
+                                v-if="messageGroup[0].from == Id"
+                                sent
+                                bg-color="green-2"
+                            >
+                                <div v-for="(message, idx) in messageGroup" :key="idx">
+                                    <q-menu
+                                     
+                                        touch-position
+                                        context-menu
+                                    >
+                                        <q-list style="min-width: 100px">
+                                            <q-item clickable v-close-popup @click="setReplyMsg(message)">
+                                                <q-item-section>
+                                                    <q-icon name="mdi-reply" size="sm"  />
+                                                </q-item-section>
+                                                <q-item-section class="q-ma-none">Reply</q-item-section>
+                                            </q-item>
+                                        </q-list>
+                                    </q-menu>
+                                    <div class="bg-grey-4 q-mb-sm q-px-sm q-py-xs reply-box"  v-if="message.replyMsg != null">
+                                        <span class="text-bold text-green-6">{{ message.replyMsg.from == Id ? 'You' : store.users.get(replyMsg.from).name}}</span>
+                                        <div v-if="message.replyMsg.type == 'text'">
+                                            {{ message.replyMsg.content }}
+                                        </div>
+                                        <div v-if="message.replyMsg.type != 'text'" class="text-italic">
+                                            {{`${message.replyMsg.type} attachment`}}
+                                        </div>
+                                    </div>
+                                    <div v-if="message.type == 'text'">{{ message.content }}</div>
+                                    
+                                    <div v-if="message.type == 'image'">
+                                        <q-img :src="message.file.src" max-width="320">
+
+                                        </q-img>
+                                    </div>
+                                    <div v-if="message.type == 'video'">
+                                        <video controls width="320">
+                                            <source :src="message.file.src" type="video/mp4">
+                                        </video>
+                                    </div>
+                                </div>
+                            </q-chat-message>
+                            <q-chat-message
+                                v-if="messageGroup[0].from != Id"
+                                name="Jane"
+                                avatar="https://cdn.quasar.dev/img/avatar5.jpg"
+                                stamp="4 minutes ago"
+                                text-color="white"
+                                bg-color="primary"
+                            >
+                                <div v-for="(message, idx) in messageGroup" :key="idx">
+                                    <div v-if="message.type == 'text'">{{ message.content }}</div>
+                                    
+                                    <div v-if="message.type == 'image'">
+                                        <q-img :src="message.file.src" max-width="320">
+
+                                        </q-img>
+                                    </div>
+                                    <div v-if="message.type == 'video'">
+                                        <video controls width="320">
+                                            <source :src="message.file.src" type="video/mp4">
+                                        </video>
+                                    </div>
+                                    
+                                </div>
+                            </q-chat-message>
+
+                            
                         </div>
-                    </q-chat-message>
-                    <q-chat-message
-                        v-if="messageGroup[0].from != Id"
-                        name="Jane"
-                        avatar="https://cdn.quasar.dev/img/avatar5.jpg"
-                        stamp="4 minutes ago"
-                        text-color="white"
-                        bg-color="primary"
-                    >
-                        <div v-for="(message, idx) in messageGroup" :key="idx">
-                            <div v-if="message.type == 'text'">{{ message.content }}</div>
-                        </div>
-                    </q-chat-message>
-                    </div>
-                    </div>
+                    </q-infinite-scroll>
                 </div>
             </q-page>
         </q-page-container>
@@ -363,8 +435,8 @@ function toggleLeftDrawer() {
             </q-card>
             </q-toolbar> -->
             
-            <q-toolbar class="bg-grey-3 text-black row q-py-sm">
-              
+            <q-toolbar style="align-items:end;" class="bg-grey-3 text-black row q-py-sm">
+             
                 <q-btn round flat icon="mdi-emoticon-outline" >
                     <q-menu>
                         <div>
@@ -372,14 +444,30 @@ function toggleLeftDrawer() {
                         </div> 
                     </q-menu>
                 </q-btn>
-                <q-btn round flat icon="mdi-image-outline" class="q-mr-sm">
+                <q-file ref="qFileInput" style="display:none" v-model="inputFiles" multiple ></q-file>
+                <q-btn round flat icon="mdi-image-outline" class="q-mr-sm" @click="getFile"></q-btn>
+        
+
+                <div class="WAL__card bg-white col-grow q-mr-sm q-px-sm">
+                    <div class="bg-grey-4 q-mt-sm q-mx-sm q-px-md q-py-xs reply-box"  v-if="replyMsg != null">
+                        <q-icon name="mdi-reply"/>
+                        Replying to <span class="text-bold">{{ replyMsg.from == Id ? 'Yourself' : store.users.get(replyMsg.from).name}}</span>
+                        <div>
+                            {{replyMsg.type == 'text' ? replyMsg.content : replyMsg.type}}
+                        </div>
+                    </div>
+                    <q-scroll-area v-if="inputFiles.length > 0" style="height: 3.3em; max-width: 100%;" class="q-pb-none q-mx-sm"  :thumb-style="thumbStyle" :bar-style="barStyle">
+                        
+                        <div class="row no-wrap">
+                            <q-chip removable @remove="inputFiles.splice(index, 1)" class="q-mt-sm q-mr-sm q-ml-none"  v-for="(file, index) in inputFiles" :key="index">
+                                {{ file.name }}
+                            </q-chip>
+                        </div>
+                    </q-scroll-area>
                     
-                </q-btn>
-                <q-field outlined rounded class="WAL__field col-grow q-mr-sm q-px-sm">
-                    <template v-slot:control>
-                        <q-input rounded borderless dense bg-color="white" v-model="inputMessageText" placeholder="Type a message" @keydown.enter="submitMessage"/>
-                    </template>
-                </q-field>
+                    <!-- <img src="https://img.vn/uploads/thuvien/singa-png-20220719150401Tdj1WAJFQr.png"/> -->
+                    <q-input rounded outlined borderless dense bg-color="white" class="WAL__field" v-model="inputMessageText" placeholder="Type a message" @keydown.enter="submitMessage"/>
+                </div>
                 <q-btn round flat icon="mic" />
             </q-toolbar>
         </q-footer>
@@ -411,10 +499,13 @@ function toggleLeftDrawer() {
     width: 90%
     max-width: 950px
     border-radius: 5px
-
-  &__field.q-field--outlined .q-field__control:before
-    border: none
-
+  &__card
+    border-radius: 1.6em
+  &__field 
+    .q-field__control:before 
+        border: none
+    .q-field__control
+        color: #ffff
   .q-drawer--standard
     .WAL__drawer-close
       display: none
@@ -449,4 +540,7 @@ function toggleLeftDrawer() {
 
 .fixed-width-child 
   white-space: nowrap
+.reply-box
+  border-radius: 0.7em
+  border-left: 6px solid $green-5
 </style>

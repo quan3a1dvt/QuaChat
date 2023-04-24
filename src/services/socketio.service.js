@@ -3,7 +3,7 @@ import axios from 'axios';
 import {useMainStore} from '../stores/store.js'
 import piniastore from '../stores/index';
 const store = useMainStore(piniastore())
-const ip = 'http://10.20.24.132'
+const ip = 'http://26.38.106.202'
 const socketport = `${ip}:3000`
 class SocketioService {
   
@@ -73,6 +73,7 @@ class SocketioService {
     });
 
     this.socket.on("recieveRooms", (rooms) => {
+      console.log
       store.addRooms(rooms)
     });
 
@@ -81,13 +82,13 @@ class SocketioService {
     });
 
 
-    this.socket.on("downloadMedia", (roomId, file_id, file_name) => {
+    this.socket.on("downloadMedia", (roomId, fileId, file_name) => {
 
       var config = {
         method: 'get',
         maxBodyLength: Infinity,
         responseType: 'blob',
-        url: `${ip}:3000/downloadfile?roomId=${roomId}&file_id=${file_id}&file_name=${file_name}`,
+        url: `${ip}:3000/downloadfile?roomId=${roomId}&fileId=${fileId}&file_name=${file_name}`,
       };
       
       axios(config)
@@ -95,7 +96,7 @@ class SocketioService {
         const reader = new FileReader();           
         reader.readAsDataURL(response.data)
         reader.addEventListener('load', () => {
-            // localStorage.setItem(`${roomId}/${file_id}`, reader.result);
+            // localStorage.setItem(`${roomId}/${fileId}`, reader.result);
         });
         
       })
@@ -142,7 +143,6 @@ class SocketioService {
     }
   }
   sendMessage(msg) {
-    store.addMessages([msg])
     this.socket.emit('sendMessage', msg, function (response) {
         console.log(response);
     });
@@ -190,16 +190,16 @@ class SocketioService {
   removeMember(roomId, userId) {
     this.socket.emit('removeMember', roomId, userId)
   }
-  async upload(file, roomId, file_id, tmp_msg) {
-    store.dispatch("addMessages", [tmp_msg])
-    if (String(file.type).startsWith('image')) {
-      this.socket.emit('uploadMedia',  roomId, file_id, file.name)
-    }
+  async upload(file, roomId, fileId, msg) {
+    
+    // if (String(file.type).startsWith('image')) {
+    //   this.socket.emit('uploadMedia',  roomId, fileId, file.name)
+    // }
     
     var data = new FormData();
     data.append('roomId', roomId)
-    data.append('id', file_id)
-    data.append('msg',tmp_msg)
+    data.append('id', fileId)
+    data.append('msg', msg)
     data.append('myfile', file);
     
     var config = {
@@ -211,28 +211,24 @@ class SocketioService {
       },
       data : data,
       onUploadProgress: function( progressEvent ) {
-        store.rooms.get(tmp_msg.to).messages.filter(d => (d.id == tmp_msg.id))[0].file.progress = parseInt( Math.round( ( progressEvent.loaded / progressEvent.total ) * 100 ) );
+        msg.file.progress = parseInt( Math.round( ( progressEvent.loaded / progressEvent.total ) * 100 ) );
       }.bind(this)
     };
     
     axios(config)
     .then(function (response) {
-      let tmp_msg_send = JSON.parse(JSON.stringify(tmp_msg))
-      tmp_msg_send.id = Date.now()
-      tmp_msg_send.isPreview = false
-      this.sendMessage(tmp_msg_send)
-      store.rooms.get(tmp_msg.to).messages = store.rooms.get(tmp_msg.to).messages.filter(d => d.id != tmp_msg.id);
+      this.sendMessage(msg)
     }.bind(this))
     .catch(function (error) {
       console.log(error);
     });
   }
-  download(roomId, file_id, file_name) {
+  download(roomId, fileId, file_name) {
     var config = {
       method: 'get',
       responseType: 'blob',
       maxBodyLength: Infinity,
-      url: `${ip}:3000/downloadfile?roomId=${roomId}&file_id=${file_id}&file_name=${file_name}`,
+      url: `${ip}:3000/downloadfile?roomId=${roomId}&fileId=${fileId}&file_name=${file_name}`,
     };
     
     axios(config)
