@@ -52,7 +52,7 @@
                   <q-tab-panel name="register">
                     <q-card-section>
                       <q-form class="q-gutter-md">
-                        <q-input filled clearable v-model="registerUsername" type="text" label="Email" />
+                        <q-input filled clearable v-model="registerUsername" type="text" label="Username" />
                         <q-input filled clearable v-model="registerEmail" type="email" label="Email" />
                         <q-input v-model="registerPassword" filled type="password" label="Password"/>
                         <q-input v-model="registerConfirmPassword" filled type="password" label="Confirm Password"/>
@@ -79,21 +79,27 @@ import {
   computed,
   watch
 } from 'vue'
+import {
+  useRoute
+} from 'vue-router';
+import axios from 'axios'
+import routes from '../router/routes'
 const tab = ref('login')
 const isPwd = ref(true)
 const loginEmail = ref('')
 const loginPassword = ref('')
 const Login = (async () => {
-  let result = await axios.get(`http://chat.quandang.org:3000/users?email=${loginEmail.value}&password=${loginPassword.value}`)
+  let result = await axios.get(`http://26.38.106.202:3000/login?email=${loginEmail.value}&password=${loginPassword.value}`)
+ 
   if (result.status == 200) {
-    console.log(result.data)
-    if (result.data.msg == 'success') {
-      localStorage.setItem("user-info", JSON.stringify(result.data[0]))
-      router.push(`/${result.data.info.id}`)
-    }
-    else {
-      wrongInfo.value = true
-    }
+    
+    // if (result.data.msg == 'success') {
+    //   localStorage.setItem("user-info", JSON.stringify(result.data[0]))
+    //   routes.push(`/${result.data.info.id}`)
+    // }
+    // else {
+    //   // wrongInfo.value = true
+    // }
   }
 })
 const registerUsername = ref('')
@@ -101,10 +107,10 @@ const registerEmail = ref('')
 const registerPassword = ref('')
 const registerConfirmPassword = ref('')
 const Register = (async () => {
-  let result = await axios.get(`http://chat.quandang.org:3000/register?email=${registerEmail.value}&password=${registerPassword.value}&username=${registerUsername.value}`)
+  let result = await axios.get(`http://26.38.106.202:3000/register?email=${registerEmail.value}&password=${registerPassword.value}&username=${registerUsername.value}`)
   if (result.status == 200) {
     if (result.data.msg == 'success') {
-      router.push('/')
+      routes.push('/')
     }
     else {   
     }

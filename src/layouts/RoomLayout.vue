@@ -29,6 +29,7 @@ const currentRoom = computed(() => {
 
 function setCurrentRoomId(id) {
     currentRoomId.value = id
+    roomMenuOpen.value = false
 }
 
 
@@ -48,7 +49,7 @@ const AddFriend = (() => {
 const test = (() => {
 
     setTimeout(() => {
-        console.log(store.rooms)
+        console.log(qlayout.value.$el.clientWidth)
         test()
     }, 3000);
 })
@@ -68,8 +69,8 @@ const getRoomStatus = ((roomId) => {
 })
 
 
-const getShortTimeFormat = ((time) => {
-    let target = new Date(time)
+const getShortTimeFormat = ((stamp) => {
+    let target = new Date(stamp)
     let now = new Date()
     let nowDayIdx = parseInt(dateFormat(now, "d"))
     let targetDayIdx = parseInt(dateFormat(target, "d"))
@@ -78,7 +79,10 @@ const getShortTimeFormat = ((time) => {
     else { return dateFormat(target, 'mmm d')}
 })
 
-
+const getTimeFromStamp = ((stamp) => {
+    let target = new Date(stamp)
+    return dateFormat(target, 'h:MM TT')
+})
 const qFileInput = ref(null)
 const getFile = (() => {
     qFileInput.value.$el.click()
@@ -141,11 +145,14 @@ const submitMessage = (async () => {
   // observeHeight()
 })
 
-const showMsgMenu = ref(false)
+const msgMenuOpen = ref(false)
 const setReplyMsg = ((msg) => {
     replyMsg.value = JSON.parse(JSON.stringify(msg))
 })
 const leftDrawerOpen = ref(true)
+function toggleLeftDrawer() {
+    leftDrawerOpen.value = !leftDrawerOpen.value
+}
 const search = ref('')
 const message = ref('')
 
@@ -154,9 +161,12 @@ const style = computed(() => ({
     height: 100 + 'vh'
 }))
 
-function toggleLeftDrawer() {
-    leftDrawerOpen.value = !leftDrawerOpen.value
+const roomMenuOpen = ref(false)
+const rightDrawerOpen = ref(false)
+function toggleRightDrawer() {
+    rightDrawerOpen.value = !rightDrawerOpen.value
 }
+
 console.log(getCssVar('primary'))
 const thumbStyle = {
     borderRadius: '5px',
@@ -170,12 +180,19 @@ const barStyle = {
     opacity: '0.2'
 }
 
+const ldrawer = ref(null)
+const rdrawer = ref(null)
+const qlayout = ref(null)
+
+const testprint = (() => {
+    console.log('da')
+})
 </script>
 
 <template v-if="store.roomsArr.length > 0" >
 <div style="">
 <div class="WAL position-relative bg-grey-4" style="height: 100vh;">
-    <q-layout view="lHh Lpr lFf" class="WAL__layout shadow-3" container >
+    <q-layout ref="qlayout" view="lHr LpR lFr" class="WAL__layout shadow-3" container >
         <q-header elevated>
             <q-toolbar class="bg-grey-3 text-black" v-if="currentRoomId != null">
                 <q-btn round flat icon="keyboard_arrow_left" class="WAL__drawer-open q-mr-sm" @click="toggleLeftDrawer" />
@@ -196,34 +213,12 @@ const barStyle = {
                 <q-btn round flat>
                     <q-icon name="attachment" class="rotate-135" />
                 </q-btn>
-                <q-btn round flat icon="more_vert">
-                    <q-menu auto-close :offset="[110, 0]">
-                        <q-list style="min-width: 150px">
-                            <q-item clickable>
-                                <q-item-section>Contact data</q-item-section>
-                            </q-item>
-                            <q-item clickable>
-                                <q-item-section>Block</q-item-section>
-                            </q-item>
-                            <q-item clickable>
-                                <q-item-section>Select messages</q-item-section>
-                            </q-item>
-                            <q-item clickable>
-                                <q-item-section>Silence</q-item-section>
-                            </q-item>
-                            <q-item clickable>
-                                <q-item-section>Clear messages</q-item-section>
-                            </q-item>
-                            <q-item clickable>
-                                <q-item-section>Erase messages</q-item-section>
-                            </q-item>
-                        </q-list>
-                    </q-menu>
+                <q-btn round flat icon="more_vert" @click="toggleRightDrawer">
                 </q-btn>
             </q-toolbar>
         </q-header>
 
-        <q-drawer v-model="leftDrawerOpen" show-if-above bordered :breakpoint="690">
+        <q-drawer ref="ldrawer" v-model="leftDrawerOpen" show-if-above bordered :breakpoint="690">
             <q-toolbar class="bg-grey-3">
                 <q-avatar class="cursor-pointer">
                     <img src="https://cdn.quasar.dev/logo-v2/svg/logo.svg" />
@@ -326,9 +321,32 @@ const barStyle = {
                 </q-list>
             </q-scroll-area>
         </q-drawer>
+        <q-drawer ref="rdrawer" v-if="currentRoomId != null" v-model="rightDrawerOpen" side="right" bordered :breakpoint="690" width="400"
+         >
+         <!-- :width="$q.screen.width > 1200 ? qlayout.$el.clientWidth * 0.3 : $q.screen.width" -->
+            <q-toolbar class="bg-grey-3">
+                <q-btn round flat icon="close" @click="toggleRightDrawer"></q-btn>
+            </q-toolbar>
+            <div>
+                <q-card  class="full-width">
+                    <q-card-section class="q-pt-lg flex flex-center column">
+                        <q-avatar size="100px" class="q-mb-sm">
+                            <img :src="currentRoom.avatar">
+                        </q-avatar>
+                        <div class="text-h5">
+                            {{ currentRoom.name }}
+                        </div>
+                    </q-card-section>
+                </q-card>
+                <q-card class="full-width">
 
-        <q-page-container class="bg-grey-2">
-            <q-page>
+                </q-card>
+            </div>
+
+       
+        </q-drawer>
+        <q-page-container  class="bg-grey-2">
+            <q-page class="page-chat">
                 
                 <div style="width: 100%;" class="q-pa-md justify-center" v-if="currentRoom != null">
                     <q-infinite-scroll @load="onLoad" reverse>
@@ -336,10 +354,13 @@ const barStyle = {
                         <div  v-for="(messageGroup, index) in currentRoom.messagesGroup" :key="index">
 
                             <q-chat-message
-                                @dblclick="showMsgMenu = true"
-                                v-if="messageGroup[0].from == Id"
-                                sent
-                                bg-color="green-2"
+                                @dblclick="msgMenuOpen = true"
+                  
+                                :sent = "messageGroup[0].from == Id"
+                                :avatar="messageGroup[0].from != Id ? store.users.get(messageGroup[0].from).avatar : undefined"
+                                :bg-color="messageGroup[0].from == Id ? 'green-2' : 'white'"
+                
+                     
                             >
                                 <div v-for="(message, idx) in messageGroup" :key="idx">
                                     <q-menu
@@ -361,8 +382,9 @@ const barStyle = {
                                         <div v-if="message.replyMsg.type == 'text'">
                                             {{ message.replyMsg.content }}
                                         </div>
-                                        <div v-if="message.replyMsg.type != 'text'" class="text-italic">
-                                            {{`${message.replyMsg.type} attachment`}}
+                                        <div v-if="message.replyMsg.type != 'text'">
+                                            <span class="text-capitalize">{{message.replyMsg.type}}</span>
+                    
                                         </div>
                                     </div>
                                     <div v-if="message.type == 'text'">{{ message.content }}</div>
@@ -377,9 +399,13 @@ const barStyle = {
                                             <source :src="message.file.src" type="video/mp4">
                                         </video>
                                     </div>
+                                    <div v-if="message.type=='text'">
+                                        <span style="font-size:medium; visibility: hidden;">{{message.content}}</span>
+                                        <span class="q-ml-xl" style="opacity: 0.6;font-size:x-small;">{{getTimeFromStamp(message.createon)}}</span>
+                                    </div>
                                 </div>
                             </q-chat-message>
-                            <q-chat-message
+                            <!-- <q-chat-message
                                 v-if="messageGroup[0].from != Id"
                                 name="Jane"
                                 avatar="https://cdn.quasar.dev/img/avatar5.jpg"
@@ -402,7 +428,7 @@ const barStyle = {
                                     </div>
                                     
                                 </div>
-                            </q-chat-message>
+                            </q-chat-message> -->
 
                             
                         </div>
@@ -497,7 +523,7 @@ const barStyle = {
     z-index: 4000
     height: 100%
     width: 90%
-    max-width: 950px
+    max-width: 1500px
     border-radius: 5px
   &__card
     border-radius: 1.6em
@@ -522,6 +548,9 @@ const barStyle = {
     &__drawer-open
       display: none
 
+.r-drawer
+  width: 30%
+
 .conversation__summary
   margin-top: 4px
 
@@ -540,7 +569,12 @@ const barStyle = {
 
 .fixed-width-child 
   white-space: nowrap
+
 .reply-box
   border-radius: 0.7em
   border-left: 6px solid $green-5
+
+.page-chat
+    background-image: linear-gradient(45deg, transparent 20%, grey 25%, transparent 25%), linear-gradient(-45deg, transparent 20%, grey 25%, transparent 25%), linear-gradient(-45deg, transparent 75%, grey 80%, transparent 0), radial-gradient(gray 2px, transparent 0)
+    background-size: 30px 30px, 30px 30px
 </style>

@@ -18,6 +18,9 @@ class SocketioService {
       auth: {
         userId
       },
+      query: {
+        
+      }
     });
 
     this.socket.on('loadComplete', () => {
