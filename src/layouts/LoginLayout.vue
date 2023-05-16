@@ -80,26 +80,27 @@ import {
   watch
 } from 'vue'
 import {
-  useRoute
+  useRouter
 } from 'vue-router';
 import axios from 'axios'
-import routes from '../router/routes'
+import Cookies from 'js-cookie'
+const ip = 'localhost'
+console.log(ip)
+const router = useRouter()
 const tab = ref('login')
 const isPwd = ref(true)
 const loginEmail = ref('')
 const loginPassword = ref('')
 const Login = (async () => {
-  let result = await axios.get(`http://26.38.106.202:3000/login?email=${loginEmail.value}&password=${loginPassword.value}`)
- 
+  let result = await axios.get(`http://${ip}:3000/login?email=${loginEmail.value}&password=${loginPassword.value}`)
+  console.log(result)
   if (result.status == 200) {
-    
-    // if (result.data.msg == 'success') {
-    //   localStorage.setItem("user-info", JSON.stringify(result.data[0]))
-    //   routes.push(`/${result.data.info.id}`)
-    // }
-    // else {
-    //   // wrongInfo.value = true
-    // }
+    Cookies.set('access_token', result.data.accessToken)
+    localStorage.setItem("user_id", result.data.user.id)
+    router.push({ path: '/chat' })
+  }
+  else {
+      // wrongInfo.value = true
   }
 })
 const registerUsername = ref('')
@@ -107,7 +108,7 @@ const registerEmail = ref('')
 const registerPassword = ref('')
 const registerConfirmPassword = ref('')
 const Register = (async () => {
-  let result = await axios.get(`http://26.38.106.202:3000/register?email=${registerEmail.value}&password=${registerPassword.value}&username=${registerUsername.value}`)
+  let result = await axios.get(`http://${ip}:3000/register?email=${registerEmail.value}&password=${registerPassword.value}&username=${registerUsername.value}`)
   if (result.status == 200) {
     if (result.data.msg == 'success') {
       routes.push('/')

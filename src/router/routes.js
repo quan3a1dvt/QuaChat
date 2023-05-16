@@ -12,7 +12,7 @@ const routes = [
     ]
   },
   {
-    path: '/:id',
+    path: '/chat',
     name: 'RoomLayout',
     props: true,
     component: RoomLayout

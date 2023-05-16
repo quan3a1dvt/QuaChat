@@ -13,12 +13,13 @@ const multer = require('multer');
 const client = new MongoClient('mongodb://localhost:27017')
 const jwtVariable = require('../variables/jwt');
 const authMethod = require('./auth/auth.methods');
+const authMdWare = require('./auth/auth.middlewares');
 const randToken = require('rand-token');
 const database = client.db('local')
-const ip = 'http://26.38.106.202'
+const ip = 'localhost'
 const io = require('socket.io')(http, {
   cors: {
-    origins: [`${ip}:9000`]
+    origins: [`http://${ip}:9000`]
   }
 });
 
@@ -86,7 +87,7 @@ app.get('/', (req, res) => {
   res.send('<h1>Hey Socket.io</h1>');
 });
 
-app.post('/uploadfile', upload.single('myfile'), async (req, res, next) => {
+app.post('/uploadfile', authMdWare.isAuth, upload.single('myfile'), async (req, res, next) => {
   const file = req.file
   if (!file) {
     const error = new Error('Please upload a file')
@@ -113,20 +114,6 @@ app.get("/file", (req, res) => {
   // res.sendFile(path.resolve(__dirname+`/../uploads/${req.query.roomId}/${req.query.file_id}/${req.query.file_name}`))
 });
 
-app.get('/users', async (req, res) => {
-  let user_info = await users_login.findOne({ email: req.query.email })
-  if (user_info != null) {
-    if (user_info.password == req.query.password) {
-      res.send({ msg: 'success', info: user_info })
-    }
-    else {
-      res.send({ msg: 'Wrong email or password' })
-    }
-  }
-  else {
-    res.send({ msg: 'Wrong email or password' })
-  }
-})
 
 app.get('/login', async (req, res) => {
 
@@ -160,7 +147,7 @@ app.get('/login', async (req, res) => {
         refreshToken = user.refreshToken;
       }
     
-      return res.json({
+      return res.status(200).json({
         msg: 'success',
         accessToken,
         refreshToken,
@@ -198,14 +185,6 @@ app.get('/register', async (req, res) => {
     users_login.insertOne(newUser)
     createUser(id, username)
     res.send({ msg: 'success' })
-		// if (!createUser) {
-		// 	return res
-		// 		.status(400)
-		// 		.send('Có lỗi trong quá trình tạo tài khoản, vui lòng thử lại.');
-		// }
-		// return res.send({
-		// 	username,
-		// });
 
   }
   else {
@@ -213,7 +192,7 @@ app.get('/register', async (req, res) => {
   }
 })
 
-app.get('/messages', async (req, res) => {
+app.get('/messages', authMdWare.isAuth, async (req, res) => {
   let sidx = Math.max(0, parseInt(req.query.sidx))
   let eidx = parseInt(req.query.eidx)
   let roomId = parseInt(req.query.roomId)
@@ -230,10 +209,10 @@ app.get('/messages', async (req, res) => {
   }
 
 })
-app.get('/video/thumbnail', (req, res) => {
+app.get('/video/thumbnail', authMdWare.isAuth, (req, res) => {
   res.download(`./uploads/${req.query.roomId}/${req.query.file_id}/${path.parse(req.query.file_name).name}-thumbnail-320x180-0001.png`)
 })
-app.get('/video', (req, res) => {
+app.get('/video', authMdWare.isAuth, (req, res) => {
   const videoPath = `./uploads/${req.query.roomId}/${req.query.file_id}/${req.query.file_name}`;
   const videoStat = fs.statSync(videoPath);
   const fileSize = videoStat.size;
@@ -330,7 +309,7 @@ io.on('connection', async (socket) => {
 
   socket.on("sendMessage", async (msg) => {
     if (msg.type != 'text') {
-      msg.file.src = `${ip}:3000/file?roomId=${msg.to}&file_id=${msg.file.id}&file_name=${msg.file.name}`
+      msg.file.src = `http://${ip}:3000/file?roomId=${msg.to}&file_id=${msg.file.id}&file_name=${msg.file.name}`
       if (msg.type == 'video') {
         // msg.file.thumbnail = `${ip}:3000/file/thumbnail?roomId=${msg.to}&file_id=${msg.file.id}&file_name=${msg.file.name}`
       }
@@ -558,14 +537,20 @@ const createUser = (async (userId, username) => {
 
 io.use(async (socket, next) => {
   // fetch token from handshake auth sent by FE
-  const userId = socket.handshake.auth.userId;
+  const token = socket.handshake.auth.token;
   try {
-    // const userId = userId;
-    // save the user data into socket object, to be used further
-    socket.user = {
-      id: userId,
+    const userId = await authMdWare.checkAuthToken(token);
+    if (userId == false) {
+      next(new Error("not authorized"));
+    } 
+    else {
+      // save the user data into socket object, to be used further
+      socket.user = {
+        id: userId,
+      }
+      next();
     }
-    next();
+
   } catch (e) {
     // if token is invalid, close connection
     console.log('error', e.message);

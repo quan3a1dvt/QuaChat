@@ -3,8 +3,11 @@ import axios from 'axios';
 import {useMainStore} from '../stores/store.js'
 import piniastore from '../stores/index';
 const store = useMainStore(piniastore())
-const ip = 'http://26.38.106.202'
-const socketport = `${ip}:3000`
+
+const ip = process.env.IP
+console.log(ip)
+const socketport = `http://${ip}:3000`
+let access_token = null
 class SocketioService {
   
   constructor() { }
@@ -13,10 +16,11 @@ class SocketioService {
     return store;
   }
 
-  async setupSocketConnection(userId) {
+  async setupSocketConnection(token) {
+    access_token = token
     this.socket = io(socketport, {
       auth: {
-        userId
+        token
       },
       query: {
         
@@ -91,7 +95,10 @@ class SocketioService {
         method: 'get',
         maxBodyLength: Infinity,
         responseType: 'blob',
-        url: `${ip}:3000/downloadfile?roomId=${roomId}&fileId=${fileId}&file_name=${file_name}`,
+        headers: { 
+          'access_token': access_token, 
+        },
+        url: `http://${ip}:3000/downloadfile?roomId=${roomId}&fileId=${fileId}&file_name=${file_name}`,
       };
       
       axios(config)
@@ -208,9 +215,10 @@ class SocketioService {
     var config = {
       method: 'post',
       maxBodyLength: Infinity,
-      url: `${ip}:3000/uploadfile`,
+      url: `http://${ip}:3000/uploadfile`,
       headers: { 
-        ...data.getHeaders ? data.getHeaders() : { 'Content-Type': 'multipart/form-data' }
+        ...data.getHeaders ? data.getHeaders() : { 'Content-Type': 'multipart/form-data' },
+        'access_token': access_token, 
       },
       data : data,
       onUploadProgress: function( progressEvent ) {
@@ -231,7 +239,10 @@ class SocketioService {
       method: 'get',
       responseType: 'blob',
       maxBodyLength: Infinity,
-      url: `${ip}:3000/downloadfile?roomId=${roomId}&fileId=${fileId}&file_name=${file_name}`,
+      headers: { 
+        'access_token': access_token, 
+      },
+      url: `http://${ip}:3000/downloadfile?roomId=${roomId}&fileId=${fileId}&file_name=${file_name}`,
     };
     
     axios(config)
