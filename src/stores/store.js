@@ -140,7 +140,13 @@ export const useMainStore = defineStore('main', {
 
         }
       }
-    }
+    },
     
+    setRead(roomId, userId, idx) {
+      if (this.rooms.has(roomId)){
+        console.log()
+        this.rooms.get(roomId).usersProperty[userId].readIdx = idx
+      }
+    }
   },
 });

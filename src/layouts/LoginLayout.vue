@@ -91,6 +91,7 @@ const tab = ref('login')
 const isPwd = ref(true)
 const loginEmail = ref('')
 const loginPassword = ref('')
+
 const Login = (async () => {
   let result = await axios.get(`http://${ip}:3000/login?email=${loginEmail.value}&password=${loginPassword.value}`)
   console.log(result)
@@ -111,7 +112,7 @@ const Register = (async () => {
   let result = await axios.get(`http://${ip}:3000/register?email=${registerEmail.value}&password=${registerPassword.value}&username=${registerUsername.value}`)
   if (result.status == 200) {
     if (result.data.msg == 'success') {
-      routes.push('/')
+      routes.push('/login')
     }
     else {   
     }

@@ -2,10 +2,10 @@ import { io, protocol } from 'socket.io-client'
 import axios from 'axios';
 import {useMainStore} from '../stores/store.js'
 import piniastore from '../stores/index';
+import cypher from './cypher.ts';
 const store = useMainStore(piniastore())
 
 const ip = process.env.IP
-console.log(ip)
 const socketport = `http://${ip}:3000`
 let access_token = null
 class SocketioService {
@@ -17,15 +17,21 @@ class SocketioService {
   }
 
   async setupSocketConnection(token) {
+    // const KeyBundle = await cypher.init()
+    const KeyBundle = 'bruh'
+    // console.log(KeyBundle)
     access_token = token
     this.socket = io(socketport, {
       auth: {
         token
       },
       query: {
-        
       }
     });
+    this.socket.on("requestKeyBundle", () => {
+      this.socket.emit("sendKeyBundle", KeyBundle)
+    });
+    
 
     this.socket.on('loadComplete', () => {
         store.loaded = true
@@ -35,16 +41,16 @@ class SocketioService {
 
       for (let msg of msgs) {
         // if (msg.from == store.user.id) {
-        //   let idx = store.rooms.get(msg.to).users_property[msg.from].readIdx
+        //   let idx = store.rooms.get(msg.to).usersProperty[msg.from].readIdx
         //   idx += 1
-        //   store.rooms.get(msg.to).users_property[msg.from].readIdx = idx
+        //   store.rooms.get(msg.to).usersProperty[msg.from].readIdx = idx
         //   this.socket.emit('setRead', msg.to, store.user.id, idx)
         // }
         // else if (store.scrollEnd == true && msg.to == store.selectedRoomId) {
         //   let roomId = store.selectedRoomId
         //   let userId = store.user.id
         //   let idx = store.rooms.get(store.selectedRoomId).messages_num - 1
-        //   store.rooms.get(roomId).users_property[userId].readIdx = idx
+        //   store.rooms.get(roomId).usersProperty[userId].readIdx = idx
         //   this.socket.emit('setRead', roomId, userId, idx)
           
         // }
@@ -80,7 +86,6 @@ class SocketioService {
     });
 
     this.socket.on("recieveRooms", (rooms) => {
-      console.log
       store.addRooms(rooms)
     });
 
@@ -89,7 +94,7 @@ class SocketioService {
     });
 
 
-    this.socket.on("downloadMedia", (roomId, fileId, file_name) => {
+    this.socket.on("downloadMedia", (roomId, fileId, fileName) => {
 
       var config = {
         method: 'get',
@@ -98,7 +103,7 @@ class SocketioService {
         headers: { 
           'access_token': access_token, 
         },
-        url: `http://${ip}:3000/downloadfile?roomId=${roomId}&fileId=${fileId}&file_name=${file_name}`,
+        url: `http://${ip}:3000/downloadfile?roomId=${roomId}&fileId=${fileId}&fileName=${fileName}`,
       };
       
       axios(config)
@@ -115,13 +120,13 @@ class SocketioService {
       });
     })
     this.socket.on("setRead", (roomId, userId, user_property) => {
-      store.rooms.get(roomId).users_property[userId] = user_property
+      store.rooms.get(roomId).usersProperty[userId] = user_property
     })
     this.socket.on("setAdmin", (roomId, userId) => {
-      store.rooms.get(roomId).users_property[userId].role="admin"
+      store.rooms.get(roomId).usersProperty[userId].role="admin"
     });
     this.socket.on("removeAdmin", (roomId, userId) => {
-      store.rooms.get(roomId).users_property[userId].role="member"
+      store.rooms.get(roomId).usersProperty[userId].role="member"
     });
     this.socket.on("removeMember", async (roomId, userId) => {
       if (store.user.id == userId) {
@@ -132,7 +137,7 @@ class SocketioService {
       }
       else {
         store.rooms.get(roomId).users = store.rooms.get(roomId).users.filter(d => d != userId)
-        delete store.rooms.get(roomId).users_property[userId]
+        delete store.rooms.get(roomId).usersProperty[userId]
       }
       
       
@@ -154,7 +159,8 @@ class SocketioService {
   }
   sendMessage(msg) {
     this.socket.emit('sendMessage', msg, function (response) {
-        console.log(response);
+        console.log("sent")
+        msg.sent = true
     });
   }
 
@@ -178,13 +184,13 @@ class SocketioService {
     this.socket.emit('changeName', roomId, name)
   }
   changeRoom() {
-    // if (store.rooms.get(store.selectedRoomId).users_property[store.user.id].readIdx < store.rooms.get(store.selectedRoomId).messages.length - 1) {
-    this.setRead(store.selectedRoomId, store.user.id, store.rooms.get(store.selectedRoomId).messages_num - 1)
+    // if (store.rooms.get(store.selectedRoomId).usersProperty[store.user.id].readIdx < store.rooms.get(store.selectedRoomId).messages.length - 1) {
+    store.setRead(store.selectedRoomId, store.user.id, store.rooms.get(store.selectedRoomId).msgCount - 1)
     this.socket.emit('changeRoom', store.selectedRoomId)
   }
   
   setRead(roomId, userId, idx) {
-    store.rooms.get(roomId).users_property[userId].readIdx = idx
+    store.rooms.get(roomId).usersProperty[userId].readIdx = idx
     this.socket.emit('setRead', roomId, userId, idx)
   }
 
@@ -234,7 +240,7 @@ class SocketioService {
       console.log(error);
     });
   }
-  download(roomId, fileId, file_name) {
+  download(roomId, fileId, fileName) {
     var config = {
       method: 'get',
       responseType: 'blob',
@@ -242,7 +248,7 @@ class SocketioService {
       headers: { 
         'access_token': access_token, 
       },
-      url: `http://${ip}:3000/downloadfile?roomId=${roomId}&fileId=${fileId}&file_name=${file_name}`,
+      url: `http://${ip}:3000/file?roomId=${roomId}&fileId=${fileId}&fileName=${fileName}`,
     };
     
     axios(config)
@@ -250,7 +256,7 @@ class SocketioService {
       const url = window.URL.createObjectURL(response.data);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `${file_name}`);
+      link.setAttribute('download', `${fileName}`);
       document.body.appendChild(link);
       link.click();
     })

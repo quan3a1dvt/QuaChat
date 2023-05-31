@@ -3,6 +3,7 @@ import {
   ref,
   onMounted,
   onBeforeUnmount,
+  nextTick,
   computed,
   watch
 } from 'vue'
@@ -10,7 +11,6 @@ import {
   useRoute
 } from 'vue-router';
 import axios from 'axios'
-import SocketioService from '../services/socketio.service.js';
 import EmojiPicker from 'vue3-emoji-picker'
 import 'vue3-emoji-picker/css'
 import InfiniteLoading from 'v3-infinite-loading'
@@ -21,6 +21,8 @@ import Cookies from 'js-cookie'
 import {
   getCssVar
 } from 'quasar'
+import SocketioService from '../services/socketio.service.js';
+
 const route = useRoute()
 const store = SocketioService.getStore()
 const Id = localStorage.getItem("user_id")
@@ -35,8 +37,10 @@ const currentRoom = computed(() => {
 function setCurrentRoomId(id) {
   currentRoomId.value = id
   roomMenuOpen.value = false
+  store.selectedRoomId = id
+  SocketioService.changeRoom()
   // setTimeout(() => {
-  //   scrollToEnd()
+  //   scrollToBottom()
   // }, 200);
 }
 
@@ -56,11 +60,14 @@ const AddFriend = (() => {
 const test = (() => {
 
   setTimeout(() => {
-    console.log(qlayout.value.$el.clientWidth)
+    if (scrollArea.value != null) {
+      console.log(scrollArea.value.getScrollPercentage())
+    
+    }
     test()
   }, 3000);
 })
-// test()
+test()
 
 const getRoomStatus = ((roomId) => {
   for (let userId of store.rooms.get(roomId).users) {
@@ -95,8 +102,9 @@ const getTimeFromStamp = ((stamp) => {
 })
 
 const scrollArea = ref(null)
-const scrollToEnd = (() => {
-  scrollArea.value.setScrollPercentage('vertical', 1.3)
+const scrollToBottom = (() => {
+  // scrollArea.value.$el.scrollTop = scrollArea.value.$el.scrollHeight + scrollArea.value.$elclientHeight;
+  scrollArea.value.setScrollPercentage('vertical', 1.2, 0)
 })
 
 const qFileInput = ref(null)
@@ -114,6 +122,7 @@ const onSelectEmoji = ((emoji) => {
 const submitMessage = (async () => {
   if (inputFiles.value.length > 0) {
     for (let file of inputFiles.value) {
+      console.log(file)
       let createon = Date.now()
       let fileId = createon
       let msg = {
@@ -160,11 +169,21 @@ const submitMessage = (async () => {
   //   files.value = null
   // observeHeight()
   setTimeout(() => {
-    scrollToEnd()
-  }, 300);
+    scrollToBottom()
+  }, 100);
 
+})
 
-
+const convertFileSize = ((size) => {
+  if (size < 1024) {
+    return `${size} K`
+  }
+  else {
+    if (size < 1024 * 1024) {
+      return `${Math.round(size / 1024)} KB`
+    }
+    else return `${Math.round(size / (1024 * 1024))} MB`
+  }
 })
 
 const msgMenuOpen = ref(false)
@@ -231,6 +250,11 @@ const load = async $state => {
   // }
 };
 onMounted(() => {
+  watch(currentRoom, (newValue) => {
+    if (newValue != null) {
+      nextTick(scrollToBottom);
+    }
+  });
 
 })
 </script>
@@ -327,7 +351,7 @@ onMounted(() => {
           <q-list>
             <q-item v-for="room in store.roomsArr" :key="room.id" clickable v-ripple @click="setCurrentRoomId(room.id)">
               {{(msgNum=room.messages.length,null) }}
-              {{(lastMsg=room.messages[msgNum - 1], unreadNum = msgCount - (room.usersProperty[Id].readIdx + 1), null)}}
+              {{(lastMsg=room.messages[msgNum - 1], unreadNum = room.msgCount - (room.usersProperty[Id].readIdx + 1), null)}}
               <q-item-section avatar>
                 <q-avatar>
                   <img v-if="room.type==0 || room.type == 2" :src="room.avatar">
@@ -389,65 +413,84 @@ onMounted(() => {
       </q-drawer>
       <q-page-container class="bg-grey-2 absolute-full">
 
-          <q-scroll-area visible=false class="scroll-area page-chat fit q-pa-md justify-center" v-if="currentRoom != null" ref="scrollArea">
-            
-              <div>
-            
-                <div v-for="(messageGroup, index) in currentRoom.messagesGroup" :key="index">
-                  <div v-for="(message, idx) in messageGroup" :key="idx">
-                    <q-chat-message style="border-radius: 25px;" :class="{'round-border':true,'remove-triagle': idx < messageGroup.length-1}" @dblclick="msgMenuOpen = true" :sent="messageGroup[0].from == Id" :bg-color="messageGroup[0].from == Id ? 'green-2' : 'white'">
-                      <template v-slot:avatar>
-                        <img :style="{visibility: idx < messageGroup.length-1 ? 'hidden' : 'visible', display: messageGroup[0].from == Id ? 'none' : ''}"
-                          class="q-message-avatar q-message-avatar--received"
-                          :src="messageGroup[0].from != Id ? store.users.get(messageGroup[0].from).avatar : store.users.get(Id).avatar"
-                        >
-                      </template>
-                        <div>
-                          <q-menu touch-position context-menu>
-                            <q-list style="min-width: 100px">
-                              <q-item clickable v-close-popup @click="setReplyMsg(message)">
-                                <q-item-section>
-                                  <q-icon name="mdi-reply" size="sm" />
-                                </q-item-section>
-                                <q-item-section class="q-ma-none">Reply</q-item-section>
-                              </q-item>
-                            </q-list>
-                          </q-menu>
-                          
-                          <div class="bg-grey-4 q-mb-sm q-px-sm q-py-xs reply-box" v-if="message.replyMsg != null">
-                            <span class="text-bold text-green-6">{{ message.replyMsg.from == Id ? 'You' : store.users.get(replyMsg.from).name}}</span>
-                            <div v-if="message.replyMsg.type == 'text'">
-                              {{ message.replyMsg.content }}
-                            </div>
-                            <div v-if="message.replyMsg.type != 'text'">
-                              <span class="text-capitalize">{{message.replyMsg.type}}</span>
+          <q-scroll-area visible=false class="page-chat fit justify-center" v-if="currentRoom != null" ref="scrollArea">
+            <InfiniteLoading @infinite="load" />
+            <div v-for="(messageGroup, index) in currentRoom.messagesGroup" :key="index">
+              <div :style="message.from == Id ? 'display:flex;justify-content: end' : ''" v-for="(message, idx) in messageGroup" :key="idx">
+                <q-chat-message style="border-radius: 25px;" :class="{'round-border':true,'remove-triagle': message.from == Id ? true : (idx < messageGroup.length-1)}" @dblclick="msgMenuOpen = true" :sent="messageGroup[0].from == Id" :bg-color="messageGroup[0].from == Id ? 'green-2' : 'white'">
+                  <template v-slot:avatar>
+                    <img :style="{visibility: idx < messageGroup.length-1 ? 'hidden' : 'visible', display: messageGroup[0].from == Id ? 'none' : ''}"
+                      class="q-message-avatar q-message-avatar--received"
+                      :src="messageGroup[0].from != Id ? store.users.get(messageGroup[0].from).avatar : store.users.get(Id).avatar"
+                    >
+                  </template>
+                    <div>
+                      <q-menu touch-position context-menu>
+                        <q-list style="min-width: 100px">
+                          <q-item clickable v-close-popup @click="setReplyMsg(message)">
+                            <q-item-section>
+                              <q-icon name="mdi-reply" size="sm" />
+                            </q-item-section>
+                            <q-item-section class="q-ma-none">Reply</q-item-section>
+                          </q-item>
+                        </q-list>
+                      </q-menu>
+                      
+                      <div class="bg-grey-4 q-mb-sm q-px-sm q-py-xs reply-box" v-if="message.replyMsg != null">
+                        <span class="text-bold text-green-6">{{ message.replyMsg.from == Id ? 'You' : store.users.get(replyMsg.from).name}}</span>
+                        <div v-if="message.replyMsg.type == 'text'">
+                          {{ message.replyMsg.content }}
+                        </div>
+                        <div v-if="message.replyMsg.type != 'text'">
+                          <span class="text-capitalize">{{message.replyMsg.type}}</span>
 
-                            </div>
-                          </div>
-                     
-                          <div v-if="message.type == 'text'" >{{ message.content }}</div>
+                        </div>
+                      </div>
+                  
+                      <div v-if="message.type == 'text'" >{{ message.content }}</div>
 
-                          <div v-if="message.type == 'image'">
-                            <img style="border-radius:10px;max-height: 25vh; max-width: 35vh;" :src="message.file.src" />
-                            <!-- <q-img fit='contain' :src="message.file.src" height="180px" width="320px"> -->
+                      <div v-if="message.type == 'image'">
+                        <img style="border-radius:10px;max-height: 25vh; max-width: 35vh;" :src="message.file.src" />
+                        <!-- <q-img fit='contain' :src="message.file.src" height="180px" width="320px"> -->
 
-                            <!-- </q-img> -->
-                          </div>
-                          <div v-if="message.type == 'video'">
-                            <video style="border-radius:10px;" controls width="320">
-                              <source :src="message.file.src" type="video/mp4">
-                            </video>
-                          </div>
-                          <div v-if="message.type == 'text'">
-                            <span style="visibility: hidden;">{{message.content}}</span>
-                            <span class="q-ml-sm" style="opacity: 0.6;font-size:x-small;">{{getTimeFromStamp(message.createon)}}</span>
+                        <!-- </q-img> -->
+                      </div>
+                      <div v-if="message.type == 'video'">
+                        <video style="border-radius:10px;" controls width="320">
+                          <source :src="message.file.src" type="video/mp4">
+                        </video>
+                      </div>
+                      <div v-if="message.type == 'document'">
+                        <q-item @click="SocketioService.download(currentRoomId, message.file.id, message.file.name)" clickable v-ripple class="q-px-sm bg-blue-grey-1 q-mb-xs" style="border-radius: 0.7rem;" >
+                          <q-item-section avatar top>
+                            <q-avatar icon="mdi-file" color="teal" text-color="white"  />
+                          </q-item-section>
+
+                          <q-item-section>
+                            <q-item-label lines="1">{{message.file.name}}</q-item-label>
+                            <q-item-label caption>{{message.file.name.split('.').pop().toUpperCase()}} • {{convertFileSize(message.file.size)}}</q-item-label>
+                          </q-item-section>
+                        </q-item>
+                      </div>
+                      <div :class="{'q-mt-sm':message.type == 'text', 'q-ml-lg':true}">
+                        <div style="display: flex;justify-content: end;">
+                          <div style="display:block;">
+                            <span style="opacity: 0.6;font-size: x-small;">{{getTimeFromStamp(message.createon)}}</span>
                           </div>
                         </div>
-                    </q-chat-message>
-                  </div>
+                      </div>
+
+                    </div>
+                </q-chat-message>
+                <div v-if="message.from == Id" class='q-mb-sm' style="display: flex;align-items: end;">
+                  
+                  <span v-if='message.from == Id' class="q-ml-xs" :style="(message.sent == false || (idx == messageGroup.length-1 && index == currentRoom.messagesGroup.length - 1)) ? 'visibility:visible' : 'visibility:hidden'">
+                    <q-icon :name="message.sent == true ? 'mdi-send-circle-outline': 'mdi-circle-outline'"/>
+                  </span>
                 </div>
               </div>
-           
+            </div>
+          
           </q-scroll-area>
           <!-- <q-page-sticky position="bottom-center" :offset="[0, 18]">
             <q-btn fab icon="add" color="accent" />
@@ -514,10 +557,7 @@ onMounted(() => {
     &__drawer-open
       display: none
 
-.scroll-area
-  .q-scrollarea__container
-    display: flex
-    flex-direction: column-reverse
+
 
 .round-border
   // .q-message-text
@@ -532,10 +572,12 @@ onMounted(() => {
     &:last-child
       &:before
         left: unset
+  
   .q-message-text--received
     &:last-child
       &:before
         right: unset
+
 
 .r-drawer
   width: 30%
@@ -564,7 +606,7 @@ onMounted(() => {
   border-left: 6px solid $green-5
 
 .page-chat
-  
+    padding: 16px 16px 0px 16px
     // background: radial-gradient(circle at left bottom ,transparent 14%,#ded2a6 15%, #ded2a6 25%, transparent 26%, transparent 34%,#ded2a680 35%, #ded2a680 45%, transparent 46%, transparent 54%, #ded2a6 55%, #ded2a6 65%, transparent 66%, transparent 74%, #ded2a680 75%, #ded2a680 85%, transparent 86%)
     // background-size: 2em 2em
     // background-color: #ffffff

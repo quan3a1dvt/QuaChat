@@ -14,14 +14,14 @@ const { configure } = require('quasar/wrappers');
 
 module.exports = configure(function (/* ctx */) {
   return {
-    eslint: {
-      // fix: true,
-      // include: [],
-      // exclude: [],
-      // rawOptions: {},
-      warnings: true,
-      errors: true
-    },
+    // eslint: {
+    //   // fix: true,
+    //   // include: [],
+    //   // exclude: [],
+    //   // rawOptions: {},
+    //   warnings: true,
+    //   errors: true
+    // },
 
     // https://v2.quasar.dev/quasar-cli/prefetch-feature
     // preFetch: true,
@@ -81,8 +81,8 @@ module.exports = configure(function (/* ctx */) {
 
       
       // vitePlugins: [
-      //   [ 'package-name', { ..options.. } ]
-      // ]
+      //   [require('libsignal')]
+      // ],
       env: require('dotenv').config().parsed
     },
 

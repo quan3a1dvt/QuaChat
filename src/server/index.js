@@ -62,7 +62,7 @@ const getRoom = (async (roomId, type) => {
       users: room.users,
       msgCount: room.messages.length,
       message_idx: Math.max(room.messages.length - 10, 0),
-      messages: room.messages.slice(-10),
+      messages: room.messages,
       usersProperty: room.usersProperty,
       typingUsersId: room.typingUsersId
     }
@@ -109,9 +109,9 @@ app.post('/uploadfile', authMdWare.isAuth, upload.single('myfile'), async (req, 
 
 app.get("/file", (req, res) => {
   // express.js
-  res.download(`./uploads/${req.query.roomId}/${req.query.file_id}/${req.query.file_name}`)
+  res.download(`./uploads/${req.query.roomId}/${req.query.fileId}/${req.query.fileName}`)
   // var path = require('path')
-  // res.sendFile(path.resolve(__dirname+`/../uploads/${req.query.roomId}/${req.query.file_id}/${req.query.file_name}`))
+  // res.sendFile(path.resolve(__dirname+`/../uploads/${req.query.roomId}/${req.query.fileId}/${req.query.fileName}`))
 });
 
 
@@ -210,10 +210,10 @@ app.get('/messages', authMdWare.isAuth, async (req, res) => {
 
 })
 app.get('/video/thumbnail', authMdWare.isAuth, (req, res) => {
-  res.download(`./uploads/${req.query.roomId}/${req.query.file_id}/${path.parse(req.query.file_name).name}-thumbnail-320x180-0001.png`)
+  res.download(`./uploads/${req.query.roomId}/${req.query.fileId}/${path.parse(req.query.fileName).name}-thumbnail-320x180-0001.png`)
 })
 app.get('/video', authMdWare.isAuth, (req, res) => {
-  const videoPath = `./uploads/${req.query.roomId}/${req.query.file_id}/${req.query.file_name}`;
+  const videoPath = `./uploads/${req.query.roomId}/${req.query.fileId}/${req.query.fileName}`;
   const videoStat = fs.statSync(videoPath);
   const fileSize = videoStat.size;
   const videoRange = req.headers.range;
@@ -245,7 +245,7 @@ app.get('/video', authMdWare.isAuth, (req, res) => {
 
 io.on('connection', async (socket) => {
   console.log('user ' + socket.user.id + ' connected');
-
+  // await socket.emit('requestKeyBundle')
   if ((await Users.findOne({ id: socket.user.id })) == null) {
     await createUser(socket.user.id, null)
   }
@@ -307,11 +307,17 @@ io.on('connection', async (socket) => {
     console.log('user ' + socket.user.id + ' disconnected');
   });
 
-  socket.on("sendMessage", async (msg) => {
+  socket.on("sendKeyBundle", async (KeyBundle) => {
+    // console.log(KeyBundle)
+    Users.updateOne({ id: socket.user.id }, { $set: { keyBundle: KeyBundle } })
+  })
+
+  socket.on("sendMessage", async (msg, callback) => {
+    msg.sent = true
     if (msg.type != 'text') {
-      msg.file.src = `http://${ip}:3000/file?roomId=${msg.to}&file_id=${msg.file.id}&file_name=${msg.file.name}`
+      msg.file.src = `http://${ip}:3000/file?roomId=${msg.to}&fileId=${msg.file.id}&fileName=${msg.file.name}`
       if (msg.type == 'video') {
-        // msg.file.thumbnail = `${ip}:3000/file/thumbnail?roomId=${msg.to}&file_id=${msg.file.id}&file_name=${msg.file.name}`
+        // msg.file.thumbnail = `${ip}:3000/file/thumbnail?roomId=${msg.to}&fileId=${msg.file.id}&fileName=${msg.file.name}`
       }
     }
 
@@ -320,7 +326,7 @@ io.on('connection', async (socket) => {
     await Rooms.updateOne({ id: msg.to }, { $inc: { msgCount: 1 } })
     await io.in(msg.to).emit("recieveMessages", [msg]);
 
-
+    callback();
   });
 
   socket.on("searchUserId", async (userId) => {
@@ -404,10 +410,10 @@ io.on('connection', async (socket) => {
     await io.in(roomId).emit("updateRoom", roomId, (await Rooms.findOne({ id: roomId })).typingUsersId, 'typingUsersId')
   })
 
-  socket.on("uploadMedia", async (roomId, file_id, file_name) => {
+  socket.on("uploadMedia", async (roomId, fileId, fileName) => {
     for (let userId of (await Rooms.findOne({ id: roomId })).users) {
       for (let socket_id of (await user2socket.findOne({ userId: userId })).socketsId) {
-        io.to(socket_id).emit('downloadMedia', roomId, file_id, file_name)
+        io.to(socket_id).emit('downloadMedia', roomId, fileId, fileName)
       }
     }
   })
@@ -548,6 +554,7 @@ io.use(async (socket, next) => {
       socket.user = {
         id: userId,
       }
+      
       next();
     }
 
