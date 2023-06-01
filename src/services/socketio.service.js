@@ -29,7 +29,11 @@ class SocketioService {
       }
     });
     this.socket.on("requestKeyBundle", () => {
-      this.socket.emit("sendKeyBundle", KeyBundle)
+      this.socket.emit("sendKeyBundle", KeyBundle, function (response) {
+        for (let friendId in store.friendsArr) {
+          // cypher.createSession(friendId, 0, store.users.get(friendId).keyBundle)
+        }
+      })
     });
     
 
@@ -81,7 +85,7 @@ class SocketioService {
       store.recieveUser(user)
     });
 
-    this.socket.on("addUsers", (users) => {
+    this.socket.on("addUsers", (users, callback) => {
       store.addUsers(users);
     });
 

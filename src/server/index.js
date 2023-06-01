@@ -77,6 +77,7 @@ const getUser = (async (userId, type) => {
       id: userId,
       name: user.name,
       avatar: user.avatar,
+      keyBundle: user.keyBundle,
       status: user.socketId != null
     }
   }
@@ -245,7 +246,7 @@ app.get('/video', authMdWare.isAuth, (req, res) => {
 
 io.on('connection', async (socket) => {
   console.log('user ' + socket.user.id + ' connected');
-  // await socket.emit('requestKeyBundle')
+  
   if ((await Users.findOne({ id: socket.user.id })) == null) {
     await createUser(socket.user.id, null)
   }
@@ -268,8 +269,12 @@ io.on('connection', async (socket) => {
       
     }
   }
-  await socket.emit('addUsers', users)
+  await socket.emit('addUsers', users, function(response){
+    // socket.emit('requestKeyBundle')
+  })
 
+  
+  
   let rooms = []
   for (let roomId of User.roomsId) {
     let room = await getRoom(roomId, 'short')
@@ -307,9 +312,9 @@ io.on('connection', async (socket) => {
     console.log('user ' + socket.user.id + ' disconnected');
   });
 
-  socket.on("sendKeyBundle", async (KeyBundle) => {
-    // console.log(KeyBundle)
-    Users.updateOne({ id: socket.user.id }, { $set: { keyBundle: KeyBundle } })
+  socket.on("sendKeyBundle", async (KeyBundle, callback) => {
+    console.log(KeyBundle)
+    await Users.updateOne({ id: socket.user.id }, { $set: { keyBundle: KeyBundle } })
   })
 
   socket.on("sendMessage", async (msg, callback) => {

@@ -260,7 +260,7 @@ onMounted(() => {
 </script>
 <template>
   <div class="WAL position-relative bg-grey-4" style="height: 100vh;">
-    <q-layout ref="qlayout" view="lHr LpR lFr" class="WAL__layout shadow-3">
+    <q-layout ref="qlayout" view="lHr LpR lFr" class="WAL__layout shadow-3" container>
       <q-header elevated>
         <q-toolbar class="bg-grey-3 text-black" v-if="currentRoomId != null">
           <q-btn round flat icon="keyboard_arrow_left" class="WAL__drawer-open q-mr-sm" @click="toggleLeftDrawer" />
@@ -411,9 +411,10 @@ onMounted(() => {
         </div>
 
       </q-drawer>
-      <q-page-container class="bg-grey-2 absolute-full">
-
-          <q-scroll-area visible=false class="page-chat fit justify-center" v-if="currentRoom != null" ref="scrollArea">
+      <q-page-container class="bg-grey-2">
+        <q-page >
+         
+          <q-scroll-area  style="height: 300px;" visible=false class="page-chat fit justify-center" v-if="currentRoom != null" ref="scrollArea">
             <InfiniteLoading @infinite="load" />
             <div v-for="(messageGroup, index) in currentRoom.messagesGroup" :key="index">
               <div :style="message.from == Id ? 'display:flex;justify-content: end' : ''" v-for="(message, idx) in messageGroup" :key="idx">
@@ -495,7 +496,8 @@ onMounted(() => {
           <!-- <q-page-sticky position="bottom-center" :offset="[0, 18]">
             <q-btn fab icon="add" color="accent" />
           </q-page-sticky> -->
-        
+          
+        </q-page>
       </q-page-container>
 
       <q-footer>
@@ -541,22 +543,45 @@ onMounted(() => {
 
 <style lang="sass">
 .WAL
-  &__card
-    border-radius: 1.6em
-  &__field 
-    .q-field__control:before 
-        border: none
-    .q-field__control
-        color: #ffff
+  width: 100%
+  height: 100%
+  padding-top: 20px
+  padding-bottom: 20px
+
+  &:before
+    content: ''
+    height: 127px
+    position: fixed
+    top: 0
+    width: 100%
+    background-color: #009688
+
+  &__layout
+    margin: 0 auto
+    z-index: 4000
+    height: 100%
+    width: 90%
+    max-width: 950px
+    border-radius: 5px
+
+  &__field.q-field--outlined .q-field__control:before
+    border: none
+
   .q-drawer--standard
     .WAL__drawer-close
       display: none
+
+@media (max-width: 850px)
+  .WAL
+    padding: 0
+    &__layout
+      width: 100%
+      border-radius: 0
 
 @media (min-width: 691px)
   .WAL
     &__drawer-open
       display: none
-
 
 
 .round-border

@@ -15,11 +15,36 @@ class cypher {
     registrationId: number
     identityKeyPair: KeyPairType
     store = new SignalProtocolStore()
-
+    sessionBuilder: SessionBuilder
+    senderSessionCipher: SessionCipher
     init = async () => {
         return this.createID()
     }
-
+    createSession = async(recipientId, deviceId, keyBundle) => {
+      const starterMessageBytes = Uint8Array.from([
+        0xce,
+        0x93,
+        0xce,
+        0xb5,
+        0xce,
+        0xb9,
+        0xce,
+        0xac,
+        0x20,
+        0xcf,
+        0x83,
+        0xce,
+        0xbf,
+        0xcf,
+        0x85,
+      ])
+      const recipientAddress = new SignalProtocolAddress(recipientId, deviceId)
+      this.sessionBuilder = new SessionBuilder(this.store, recipientAddress)
+      await this.sessionBuilder.processPreKey(keyBundle)
+      this.senderSessionCipher = new SessionCipher(this.store, recipientAddress)
+      const ciphertext = await this.senderSessionCipher.encrypt(starterMessageBytes.buffer)
+      console.log(ciphertext)
+    }
     createID = async () => {
         this.registrationId = KeyHelper.generateRegistrationId()
         // storeSomewhereSafe(`registrationID`, registrationId)
