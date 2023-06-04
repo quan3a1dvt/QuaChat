@@ -259,8 +259,8 @@ onMounted(() => {
 })
 </script>
 <template>
-  <div class="WAL position-relative bg-grey-4" style="height: 100vh;">
-    <q-layout ref="qlayout" view="lHr LpR lFr" class="WAL__layout shadow-3" container>
+  <div class="WAL position-relative bg-grey-4" :style="style">
+    <q-layout view="lHr lpR lFr" class="WAL__layout shadow-3" container>
       <q-header elevated>
         <q-toolbar class="bg-grey-3 text-black" v-if="currentRoomId != null">
           <q-btn round flat icon="keyboard_arrow_left" class="WAL__drawer-open q-mr-sm" @click="toggleLeftDrawer" />
@@ -389,7 +389,7 @@ onMounted(() => {
           </q-list>
         </q-scroll-area>
       </q-drawer>
-      <q-drawer ref="rdrawer" v-if="currentRoomId != null" v-model="rightDrawerOpen" side="right" bordered :breakpoint="690" width="400">
+      <q-drawer ref="rdrawer" v-if="currentRoomId != null" v-model="rightDrawerOpen" side="right" show-if-above bordered :breakpoint="690" width="400">
         <!-- :width="$q.screen.width > 1200 ? qlayout.$el.clientWidth * 0.3 : $q.screen.width" -->
         <q-toolbar class="bg-grey-3">
           <q-btn round flat icon="close" @click="toggleRightDrawer"></q-btn>
@@ -412,9 +412,8 @@ onMounted(() => {
 
       </q-drawer>
       <q-page-container class="bg-grey-2">
-        <q-page >
-         
-          <q-scroll-area  style="height: 300px;" visible=false class="page-chat fit justify-center" v-if="currentRoom != null" ref="scrollArea">
+        <q-page style="height: 300px;">
+          <q-scroll-area visible=false class="page-chat fit justify-center" v-if="currentRoom != null" ref="scrollArea">
             <InfiniteLoading @infinite="load" />
             <div v-for="(messageGroup, index) in currentRoom.messagesGroup" :key="index">
               <div :style="message.from == Id ? 'display:flex;justify-content: end' : ''" v-for="(message, idx) in messageGroup" :key="idx">
@@ -496,8 +495,9 @@ onMounted(() => {
           <!-- <q-page-sticky position="bottom-center" :offset="[0, 18]">
             <q-btn fab icon="add" color="accent" />
           </q-page-sticky> -->
-          
         </q-page>
+           
+   
       </q-page-container>
 
       <q-footer>
@@ -561,11 +561,16 @@ onMounted(() => {
     z-index: 4000
     height: 100%
     width: 90%
-    max-width: 950px
+    max-width: 1440px
     border-radius: 5px
 
-  &__field.q-field--outlined .q-field__control:before
-    border: none
+  &__field
+    .q-field__control:before 
+        border: none
+    .q-field__control
+        color: #ffff
+  &__card
+    border-radius: 1.6em
 
   .q-drawer--standard
     .WAL__drawer-close
@@ -582,6 +587,13 @@ onMounted(() => {
   .WAL
     &__drawer-open
       display: none
+
+.conversation__summary
+  margin-top: 4px
+
+.conversation__more
+  margin-top: 0!important
+  font-size: 1.4rem
 
 
 .round-border
@@ -607,13 +619,6 @@ onMounted(() => {
 .r-drawer
   width: 30%
 
-.conversation__summary
-  margin-top: 4px
-
-.conversation__more
-  margin-top: 0!important
-  font-size: 1.4rem
-
 .parent 
   display: grid
   grid-template-columns: auto 10fr 1fr
@@ -631,7 +636,7 @@ onMounted(() => {
   border-left: 6px solid $green-5
 
 .page-chat
-    padding: 16px 16px 0px 16px
+  padding: 16px 16px 0px 16px
     // background: radial-gradient(circle at left bottom ,transparent 14%,#ded2a6 15%, #ded2a6 25%, transparent 26%, transparent 34%,#ded2a680 35%, #ded2a680 45%, transparent 46%, transparent 54%, #ded2a6 55%, #ded2a6 65%, transparent 66%, transparent 74%, #ded2a680 75%, #ded2a680 85%, transparent 86%)
     // background-size: 2em 2em
     // background-color: #ffffff
