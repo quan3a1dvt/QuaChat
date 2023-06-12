@@ -252,7 +252,10 @@ const load = async $state => {
 onMounted(() => {
   watch(currentRoom, (newValue) => {
     if (newValue != null) {
-      nextTick(scrollToBottom);
+      setTimeout(() => {
+        nextTick(scrollToBottom);
+      }, 200); // Delay of 1000 milliseconds (1 second)
+      
     }
   });
 

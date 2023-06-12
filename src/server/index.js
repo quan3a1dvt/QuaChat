@@ -1,5 +1,5 @@
 const { uniqueNamesGenerator, names } = require('unique-names-generator');
-const ThumbnailGenerator = require('video-thumbnail-generator').default;
+const captureimage = require('./capture-image')
 const path = require('path');
 const cors = require('cors');
 const app = require('express')();
@@ -56,7 +56,6 @@ const getRoom = (async (roomId, type) => {
     return {
       id: room.id,
       name: room.name,
-      name_list: room.name_list,
       type: room.type,
       avatar: room.avatar,
       users: room.users,
@@ -95,16 +94,14 @@ app.post('/uploadfile', authMdWare.isAuth, upload.single('myfile'), async (req, 
     error.httpStatusCode = 400
     return next(error)
   }
-  // if (String(req.file.mimetype).startsWith('video')) {
-  //   let tg = new ThumbnailGenerator({
-  //     sourcePath: `./uploads/${req.body.roomId}/${req.body.id}/${req.file.originalname}`,
-  //     thumbnailPath: `./uploads/${req.body.roomId}/${req.body.id}/`,
-  //   });
-  //   await tg.generateOneByPercent(10, { size: '320x180' })
-  //     .then(console.log);
-  //   res.send(file)
-  //   return
-  // }
+  if (String(req.file.mimetype).startsWith('video')) {
+    
+  
+    const videoFilePath = `./uploads/${req.body.roomId}/${req.body.id}/${req.file.originalname}`;
+    const exportFilePath = `./uploads/${req.body.roomId}/${req.body.id}/`;
+
+    captureimage.captureImageFromVideo(videoFilePath, exportFilePath)
+  }
   res.send(file)
 })
 
@@ -167,30 +164,48 @@ app.get('/login', async (req, res) => {
 
 })
 
-app.get('/register', async (req, res) => {
-  let email = req.query.email
-  let username = req.query.username
-  let password = req.query.password
-  let user_info = await users_login.findOne({ email: email })
-  if (user_info == undefined) {
-    let id = await users_login.count() == 0 ? '0' : String(parseInt((await users_login.find().sort({ id: -1 }).limit(1).toArray())[0].id) + 1) || 0
-    
-    
 
-		const newUser = {
+async function checkUserExist(email) {
+  let userLogin = await users_login.findOne({ email: email })
+  if (userLogin == undefined) {
+    return true
+  }
+  else {
+    return false
+  }
+}
+
+async function generateNextUserId() {
+  let id = await users_login.count() == 0 ? '0' : String(parseInt((await users_login.find().sort({ id: -1 }).limit(1).toArray())[0].id) + 1) || 0
+	return id
+}
+
+app.post('/register', async (req, res) => {
+
+  let firstname = req.body.firstname
+  let lastname = req.body.lastname
+  let username = req.body.username
+  let email = req.body.email
+  let password = req.body.password
+
+  if (await checkUserExist(email)) {
+    res.send({ msg: 'exist' })
+  }
+  
+  else {
+    const userLogin = {
+      firstname: firstname,
+      lastname: lastname,
 			email: email,
       username: username,
 			password: password,
-      id: id
+      id: await generateNextUserId()
 		};
-    users_login.insertOne(newUser)
+    users_login.insertOne(userLogin)
     createUser(id, username)
     res.send({ msg: 'success' })
-
   }
-  else {
-    res.send({ msg: 'exist' })
-  }
+  
 })
 
 app.get('/messages', authMdWare.isAuth, async (req, res) => {
@@ -559,7 +574,6 @@ io.use(async (socket, next) => {
       socket.user = {
         id: userId,
       }
-      
       next();
     }
 

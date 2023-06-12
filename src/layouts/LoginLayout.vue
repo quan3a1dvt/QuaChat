@@ -52,6 +52,8 @@
                   <q-tab-panel name="register">
                     <q-card-section>
                       <q-form class="q-gutter-md">
+                        <q-input filled clearable v-model="registerFirstName" type="text" label="First Name" />
+                        <q-input filled clearable v-model="registerLastName" type="text" label="Last Name" />
                         <q-input filled clearable v-model="registerUsername" type="text" label="Username" />
                         <q-input filled clearable v-model="registerEmail" type="email" label="Email" />
                         <q-input v-model="registerPassword" filled type="password" label="Password"/>
@@ -104,11 +106,40 @@ const Login = (async () => {
       // wrongInfo.value = true
   }
 })
+
+const registerFirstName = ref('')
+const registerLastName = ref('')
 const registerUsername = ref('')
 const registerEmail = ref('')
 const registerPassword = ref('')
 const registerConfirmPassword = ref('')
 const Register = (async () => {
+  let data = new FormData();
+  data.append('firstname', registerFirstName.value);
+  data.append('lastname', registerLastName.value);
+  data.append('username', registerUsername.value);
+  data.append('email', registerEmail.value);
+  data.append('password', registerPassword.value);
+  let config = {
+    method: 'post',
+    maxBodyLength: Infinity,
+    url: `http://${ip}:3000/register`,
+    headers: { 
+      ...data.getHeaders()
+    },
+    data : data
+  };
+
+  axios.request(config)
+  .then((response) => {
+    console.log(JSON.stringify(response.data));
+  })
+  .catch((error) => {
+    console.log(error);
+  });
+
+
+
   let result = await axios.get(`http://${ip}:3000/register?email=${registerEmail.value}&password=${registerPassword.value}&username=${registerUsername.value}`)
   if (result.status == 200) {
     if (result.data.msg == 'success') {
