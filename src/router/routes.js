@@ -1,5 +1,6 @@
 import RoomLayout from '../layouts/RoomLayout.vue'
 import LoginLayout from '../layouts/LoginLayout.vue'
+import RegisterLayout from '../layouts/RegisterLayout.vue'
 import DummyLayout from '../layouts/DummyLayout.vue'
 const routes = [
   {
@@ -34,6 +35,12 @@ const routes = [
     name: 'LoginLayout',
     props: true,
     component: LoginLayout
+  },
+  {
+    path: '/register',
+    name: 'RegisterLayout',
+    props: true,
+    component: RegisterLayout
   },
   // Always leave this as last one,
   // but you can also remove it

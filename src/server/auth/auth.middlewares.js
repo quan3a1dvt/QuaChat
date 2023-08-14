@@ -7,13 +7,22 @@ exports.checkAuthToken = async (accessToken) => {
 		accessToken,
 		accessTokenSecret,
 	);
-	if (!verified) {
-		return false
+	if (verified) {
+		return true
 	}
-
-	const userId = verified.payload.id;
-	return userId
+	return false
 }
+
+exports.getUserId = async (accessToken) => {
+	const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET || jwtVariable.accessTokenSecret;
+
+	const verified = await authMethod.verifyToken(
+		accessToken,
+		accessTokenSecret,
+	);
+	return verified.payload.id
+}
+
 exports.isAuth = async (req, res, next) => {
 	// Lấy access token từ header
 	const accessTokenFromHeader = req.headers.access_token;
