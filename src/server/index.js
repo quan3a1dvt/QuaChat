@@ -226,7 +226,7 @@ async function createPersonalRoom(user) {
   };
   const roomId = await generateId()
   initMessage = { 
-    id: generateId(),
+    id: await generateId(),
     from: user.id,
     to: roomId,
     createon: Date.now(),
@@ -294,7 +294,7 @@ async function createGroupRoom(ownerUserId, usersId, roomId, roomName, avatarNam
 
   }
   initMessage = { 
-    id: generateId(),
+    id: await generateId(),
     from: ownerUserId,
     to: roomId,
     createon: Date.now(),
@@ -442,7 +442,6 @@ io.on("connection", async (socket) => {
   console.log("user " + socket.user.id + " connected")
   await Users.updateOne({id: socket.user.id}, {$set: {socketId: socket.id}})
   await updateUserStatus(socket.user.id, true)
-
   socket.on("initData", async () => {
     socket.emit("sendLoginUser", await getLoginUser(socket.user.id));
     let User = await Users.findOne({ id: socket.user.id });

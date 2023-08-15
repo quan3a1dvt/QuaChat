@@ -3,7 +3,6 @@
   {{ (readIdx = room.users[loginUserId].readIdx, null) }}
   {{ (unreadMsg = msgsIdArr.length - (readIdx + 1), null) }}
   {{ (lastMessage = room.messages[msgsIdArr[msgsIdArr.length - 1]], null) }}
-
   <q-item
     clickable
     v-ripple
@@ -81,6 +80,10 @@ const props = defineProps({
     required: true
   },
   loginUserId: { type: String, required: true },
+  users: {
+    type: Object,
+    required: true
+  }
 })
 // const emit = defineEmits(['click'])
 

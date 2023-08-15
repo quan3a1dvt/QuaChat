@@ -409,10 +409,10 @@ function setReplyMsg(msg) {
 
 const test = () => {
   setTimeout(() => {
-    console.log(store.users);
-
+    const socket = SocketioService.getSocket();
+    socket.emit("initData")
     test();
-  }, 3000);
+  }, 200);
 };
 // test();
 
@@ -451,7 +451,10 @@ onMounted(async () => {
   const socket = await SocketioService.setupSocketConnection(token);
   socket.on("connect", () => {
     socketConnected = true;
-    socket.emit("initData");
+    setTimeout(() => {
+      socket.emit("initData");
+    }, 1000)
+    
   });
   watch(currentRoom, (newValue) => {
     if (newValue != null) {
@@ -924,6 +927,7 @@ const style = computed(() => ({
 
         <div class="q-px-sm bg-white" style="height:92%">
           <q-scroll-area style="height:100%">
+           
             <q-list>
               <template v-for="roomId of store.sortedRoomsId" :key="roomId">
                 {{ (room = store.rooms[roomId], null) }}
@@ -1409,6 +1413,7 @@ const style = computed(() => ({
                     class="q-ml-sm"
                     style="height: 44px; width: 44px"
                     color="teal-6"
+                    v-close-popup
                     @click="submitMessage()"
                   >
                     <q-icon size="16px" name="mdi-send-outline"> </q-icon>
