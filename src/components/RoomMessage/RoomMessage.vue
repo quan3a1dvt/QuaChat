@@ -19,12 +19,25 @@
         :sent="sent"
         :class="{ 'bg-green-2': sent }"
       >
-        <q-menu touch-position context-menu style="width: 150px;">
-          <q-list>
+        <q-menu 
+          touch-position 
+          context-menu 
+          square
+          class="vtc-message-menu"
+        >
+          <div class="vtc-emoji-wrapper">
+            <div class="vtc-emoji-template" @click="this.$emit('send-emote','❤️', message.id)">❤️</div>
+            <div class="vtc-emoji-template" >😆</div>
+            <div class="vtc-emoji-template" >😮</div>
+            <div class="vtc-emoji-template" >😠</div>
+            <div class="vtc-emoji-template" >👍</div>
+            <q-btn round icon="add" class="bg-grey-3" size="md"></q-btn>
+          </div>
+          <q-list class="vtc-menu-list">
             <q-item
               clickable
               v-close-popup
-              @click="this.$emit('reply')"
+              @click="this.$emit('reply', message)"
               dense
               style="padding: 9px 16px"
             >
@@ -152,7 +165,7 @@ const props = defineProps({
   message: { type: Object, required: true },
 });
 
-const emit = defineEmits(['reply'])
+const emit = defineEmits(['reply', 'send-emote'])
 
 function showDate() {}
 
@@ -199,4 +212,5 @@ function download(fileId, fileName) {
 
 <style lang="scss">
 @import "./RoomMessage.scss";
+
 </style>

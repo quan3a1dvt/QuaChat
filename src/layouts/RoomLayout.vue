@@ -34,38 +34,6 @@ const addMessageRef = (el, msgId) => {
   messagesEl.value[msgId] = el;
 };
 
-const ROOM_TYPE = {
-  PERSONAL_ROOM: 1,
-  ONETOONE_ROOM: 2,
-  GROUP_ROOM: 3,
-};
-const USER_TYPE = {
-  USER: 1,
-  ADMIN: 2,
-  OWNER: 3,
-};
-
-const USER_TYPE2TEXT = {
-  1: "User",
-  2: "Admin",
-  3: "Owner",
-};
-
-const MESSAGE_TYPE = {
-  EVENT: 1,
-  TEXT: 2,
-  VIDEO: 3,
-  IMAGE: 4,
-  DOCUMENT: 5,
-};
-
-const MESSAGE_TYPE2TEXT = {
-  1: "Event",
-  2: "Text",
-  3: "Video",
-  4: "Image",
-  5: "Document",
-};
 
 async function generateId() {
   return uuidv4();
@@ -284,6 +252,9 @@ function onLoad(index, done) {
   }, 200)
 }
 
+function setEmote(messageId, emote) {
+  SocketioService.setEmote(messageId, emote)
+}
 
 //bottom
 
@@ -925,8 +896,8 @@ const style = computed(() => ({
           </q-input>
         </q-toolbar>
 
-        <div class="q-px-sm bg-white" style="height:92%">
-          <q-scroll-area style="height:100%">
+        <div class="bg-white" style="height:92%">
+          <q-scroll-area style="height:100%" class="q-pl-sm q-pr-md">
            
             <q-list>
               <template v-for="roomId of store.sortedRoomsId" :key="roomId">
@@ -1213,6 +1184,7 @@ const style = computed(() => ({
               :read-idx="currentRoom.users[store.loginUser.id].readIdx"
               :login-user-id="store.loginUser.id"
               @reply="(message) => setReplyMsg(message)"
+              @send-emote="(emote, messageId) => setEmote(messageId, emote)"
             />
           </q-scroll-area>
           <q-page-sticky
@@ -1279,7 +1251,7 @@ const style = computed(() => ({
           <q-btn flat icon="mdi-emoticon-outline">
             <q-menu>
               <div>
-                <EmojiPicker :native="true" @select="onSelectEmoji" />
+                <EmojiPicker @select="onSelectEmoji" />
               </div>
             </q-menu>
           </q-btn>
@@ -1571,5 +1543,6 @@ const style = computed(() => ({
 
 .page-chat
   padding: 0px 16px 0px 16px
-  background-color: #F9F9F9
+  // background-color: #F9F9F9
+  background-image: url('http://localhost:3000/assets?fileName=812556.jpg')
 </style>

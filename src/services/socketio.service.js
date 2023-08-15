@@ -140,6 +140,9 @@ class SocketioService {
         store.rooms[roomId].users[userId].readIdx = idx;
       }
     });
+    this.socket.on("setEmote", (roomId, messageId, userId, emote) => {
+      store.setEmote(roomId, messageId, userId, emote)
+    });
     this.socket.on("setAdmin", (roomId, userId) => {
       store.rooms.get(roomId).usersProperty[userId].role = "admin";
     });
@@ -298,6 +301,11 @@ class SocketioService {
     store.setRead(store.currentRoomId, store.loginUser.id, msgsIdArr.length - 1)
     this.socket.emit("setRead", store.currentRoomId, store.loginUser.id, msgsIdArr.length - 1);
     // this.socket.emit("changeRoom", store.selectedRoomId);
+  }
+
+  setEmote(messageId, emote) {
+    store.setEmote(roomId, messageId, userId, emote)
+    this.socket.emit("setEmote", store.currentRoomId, messageId, store.loginUser.id, emote)
   }
 
   setRead(roomId, userId, idx) {

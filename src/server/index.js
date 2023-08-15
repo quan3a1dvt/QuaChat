@@ -706,6 +706,10 @@ io.on("connection", async (socket) => {
     await io.in(roomId).emit("removeMember", roomId, userId);
   });
 
+  socket.on("setEmote", async (roomId, messageId, userId, emote) => {
+    await Rooms.updateOne({ id: roomId }, { $set: { [`messages.${messageId}.emotes.${{userId, emote}}`]: true } });
+    await io.in(roomId).emit("setEmote", roomId, messageId, userId, emote);
+  });
   
   socket.on("setRead", async (roomId, userId, idx) => {
     await Rooms.updateOne({ id: roomId }, { $set: { [`users.${userId}.readIdx`]: idx } });

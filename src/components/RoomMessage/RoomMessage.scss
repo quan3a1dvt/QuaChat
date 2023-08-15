@@ -22,41 +22,32 @@
     padding: 6px 6px 1px 6px;
     border-radius: 6px 6px 6px 6px;
   }
-  // Menu animation
-  .vac-slide-left-enter-active,
-  .vac-slide-right-enter-active {
-    transition: all 0.3s ease;
-    transition-property: transform, opacity;
+}
+
+.vtc-message-menu {
+  width: 224px;
+  background-color: transparent;
+  border: transparent;
+  box-shadow: none;
+
+  .vtc-menu-list{
+    box-shadow: rgba(0, 0, 0, 0.15) 0px 0px 10px;
+    background-color: white; 
   }
 
-  .vac-slide-left-leave-active,
-  .vac-slide-right-leave-active {
-    transition: all 0.2s cubic-bezier(1, 0.5, 0.8, 1) !important;
-    transition-property: transform, opacity;
+  .vtc-emoji-wrapper {
+    background-color: white;
+    border-radius: 25px;
+    margin-bottom: 10px;
+    padding-left:3px;
+    display: flex;
+    box-shadow: rgba(0, 0, 0, 0.15) 0px 0px 10px;
   }
-
-  .vac-slide-left-enter-from,
-  .vac-slide-left-leave-to {
-    transform: translateX(10px);
-    opacity: 0;
+  .vtc-emoji-template {
+    font-size: 26px;
+    transition: transform .2s;
   }
-
-  .vac-slide-right-enter-from,
-  .vac-slide-right-leave-to {
-    transform: translateX(-10px);
-    opacity: 0;
-  }
-
-  // Reply message box animation
-  .vac-slide-up-enter-active {
-    transition: all 0.3s ease;
-  }
-  .vac-slide-up-leave-active {
-    transition: all 0.2s cubic-bezier(1, 0.5, 0.8, 1);
-  }
-  .vac-slide-up-enter-from,
-  .vac-slide-up-leave-to {
-    transform: translateY(10px);
-    opacity: 0;
+  .vtc-emoji-template:hover{
+    transform: scale(1.5);
   }
 }
