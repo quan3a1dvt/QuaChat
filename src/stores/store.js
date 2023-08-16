@@ -186,10 +186,7 @@ const useMainStore = defineStore('main', {
     },
 
     setEmote(roomId, messageId, userId, emote) {
-      if (this.rooms[roomId].messages[messageId].emotes == undefined) {
-        this.rooms[roomId].messages[messageId].emotes = {}
-      }
-      this.rooms[roomId].messages[messageId].emotes[{userId, emote}] = true
+      this.rooms[roomId].messages[messageId].emotes[{'userId': userId, 'emote': emote}] = true
     }
   },
 });

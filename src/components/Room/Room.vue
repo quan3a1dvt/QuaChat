@@ -69,6 +69,7 @@ import {
 } from "vue";
 import dateFormat, { masks } from "dateformat";
 
+console.log(MESSAGE_TYPE)
 
 const props = defineProps({
   room: {

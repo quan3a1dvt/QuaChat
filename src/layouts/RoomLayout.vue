@@ -281,6 +281,7 @@ async function getTextMsg() {
     sent: false,
     type: MESSAGE_TYPE.TEXT,
     content: inputMessageText.value,
+    emotes: {},
     replyMsg: replyMsg.value != null ? replyMsg.value : null,
   };
 }
@@ -304,6 +305,7 @@ async function getFileMsg(file) {
       size: file.size,
       progress: 0,
     },
+    emotes: {},
     reply: replyMsg.value != null ? replyMsg.value : null,
   };
 }

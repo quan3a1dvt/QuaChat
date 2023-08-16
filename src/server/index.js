@@ -1,6 +1,6 @@
 const { uniqueNamesGenerator, names } = require("unique-names-generator");
 const captureimage = require("./capture-image");
-const { v4: uuidv4 } = require('uuid');
+const { v4: uuidv4 } = require("uuid");
 const path = require("path");
 const cors = require("cors");
 const app = require("express")();
@@ -26,12 +26,12 @@ const io = require("socket.io")(http, {
 });
 var storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const path = `./uploads/${req.body.id}`
-    fs.mkdirSync(path, { recursive: true })
-    cb(null, path)
+    const path = `./uploads/${req.body.id}`;
+    fs.mkdirSync(path, { recursive: true });
+    cb(null, path);
   },
   filename: function (req, file, cb) {
-    cb(null, file.originalname)
+    cb(null, file.originalname);
   },
 });
 var upload = multer({ storage: storage });
@@ -58,14 +58,14 @@ async function getRoom(roomId, loginUserId) {
   if (room.type == ROOM_TYPE.ONETOONE_ROOM) {
     for (let userId in room.users) {
       if (userId != loginUserId) {
-        const user = await (Users.findOne({id: userId}))
-        room.name = user.displayname
-        room.avatar = user.avatar
-        break
+        const user = await Users.findOne({ id: userId });
+        room.name = user.displayname;
+        room.avatar = user.avatar;
+        break;
       }
     }
   }
-  return room
+  return room;
   // return {
   //   id: room.id,
   //   name: room.name,
@@ -75,8 +75,6 @@ async function getRoom(roomId, loginUserId) {
   //   messages: room.messages,
   // };
 }
-
-
 
 app.get("/", (req, res) => {
   res.send("<h1>Hey Socket.io</h1>");
@@ -105,19 +103,15 @@ app.post(
 
 app.get("/file", (req, res) => {
   // express.js
-  res.download(
-    `./uploads/${req.query.id}/${req.query.fileName}`
-  );
+  res.download(`./uploads/${req.query.id}/${req.query.fileName}`);
   // var path = require('path')
   // res.sendFile(path.resolve(__dirname+`/../uploads/${req.query.roomId}/${req.query.fileId}/${req.query.fileName}`))
 });
 
 app.get("/assets", (req, res) => {
   // express.js
-  res.download(
-    `../assets/${req.query.fileName}`
-  );
-  
+  res.download(`../assets/${req.query.fileName}`);
+
   // var path = require('path')
   // res.sendFile(path.resolve(__dirname+`/../uploads/${req.query.roomId}/${req.query.fileId}/${req.query.fileName}`))
 });
@@ -125,7 +119,7 @@ app.get("/assets", (req, res) => {
 app.post("/login", upload.none(), async (req, res) => {
   const { email, password } = req.body;
   if (await checkUserExist(email)) {
-    const user = await Users.findOne({ email: email })
+    const user = await Users.findOne({ email: email });
     if (user.password == password) {
       const accessTokenLife =
         process.env.ACCESS_TOKEN_LIFE || jwtVariable.accessTokenLife;
@@ -140,7 +134,7 @@ app.post("/login", upload.none(), async (req, res) => {
         accessTokenLife
       );
 
-      let refreshToken = randToken.generate(jwtVariable.refreshTokenSize); 
+      let refreshToken = randToken.generate(jwtVariable.refreshTokenSize);
       if (!user.refreshToken) {
         await Users.updateOne(
           { id: user.id },
@@ -161,23 +155,19 @@ app.post("/login", upload.none(), async (req, res) => {
       .status(400)
       .json({ err: "User with email doesnot exists. Please signup" });
   }
-
 });
 
 app.post("/register", upload.none(), async (req, res) => {
-  const registerInfo = req.body
+  const registerInfo = req.body;
   if (await checkUserExist(registerInfo)) {
-    return res
-      .status(400)
-      .json({ err: "User with email exists" });
-  } 
-  else {
+    return res.status(400).json({ err: "User with email exists" });
+  } else {
     const user = await createUser(registerInfo);
-    const selfroom = await createPersonalRoom(user)
-    user.rooms[selfroom.id] = {id: selfroom.id}
-    await Users.insertOne(user)
-    await Rooms.insertOne(selfroom)
-    return res.status(200).json({msg: 'User created'});
+    const selfroom = await createPersonalRoom(user);
+    user.rooms[selfroom.id] = { id: selfroom.id };
+    await Users.insertOne(user);
+    await Rooms.insertOne(selfroom);
+    return res.status(200).json({ msg: "User created" });
   }
 });
 async function checkUserExist(email) {
@@ -190,7 +180,7 @@ async function checkUserExist(email) {
 }
 
 async function generateId() {
-  return uuidv4()
+  return uuidv4();
 }
 
 function generateTimestampId() {
@@ -201,31 +191,31 @@ function generateTimestampId() {
 const ROOM_TYPE = {
   PERSONAL_ROOM: 1,
   ONETOONE_ROOM: 2,
-  GROUP_ROOM: 3
-}
+  GROUP_ROOM: 3,
+};
 const USER_TYPE = {
   USER: 1,
   ADMIN: 2,
-  OWNER: 3
-}
+  OWNER: 3,
+};
 
 const MESSAGE_TYPE = {
   EVENT: 1,
   TEXT: 2,
   VIDEO: 3,
   IMAGE: 4,
-  DOCUMENT: 5
-}
+  DOCUMENT: 5,
+};
 
 async function createPersonalRoom(user) {
   let roomUsers = {};
   roomUsers[user.id] = {
     id: user.id,
-    readIdx: 0, 
-    role: USER_TYPE.OWNER 
+    readIdx: 0,
+    role: USER_TYPE.OWNER,
   };
-  const roomId = await generateId()
-  initMessage = { 
+  const roomId = await generateId();
+  initMessage = {
     id: await generateId(),
     from: user.id,
     to: roomId,
@@ -233,7 +223,7 @@ async function createPersonalRoom(user) {
     type: MESSAGE_TYPE.EVENT,
     content: "User created",
     reply: null,
-  }
+  };
   const room = {
     id: roomId,
     name: user.displayname,
@@ -242,26 +232,26 @@ async function createPersonalRoom(user) {
     owner: user.id,
     createon: Date.now(),
     messages: {
-      [initMessage.id]: initMessage
+      [initMessage.id]: initMessage,
     },
-    users: roomUsers
-  }
-  return room
+    users: roomUsers,
+  };
+  return room;
 }
 
 async function createOneToOneRoom(loginUser, user) {
   let roomUsers = {};
   roomUsers[loginUser.id] = {
     id: loginUser.id,
-    readIdx: 0, 
-    role: USER_TYPE.OWNER 
+    readIdx: 0,
+    role: USER_TYPE.OWNER,
   };
   roomUsers[user.id] = {
     id: user.id,
-    readIdx: -1, 
-    role: USER_TYPE.OWNER 
+    readIdx: -1,
+    role: USER_TYPE.OWNER,
   };
-  const roomId = await generateId()
+  const roomId = await generateId();
   const room = {
     id: roomId,
     name: user.displayname,
@@ -269,31 +259,35 @@ async function createOneToOneRoom(loginUser, user) {
     avatar: user.avatar,
     createon: Date.now(),
     messages: {},
-    users: roomUsers
-  }
-  return room
+    users: roomUsers,
+  };
+  return room;
 }
 
-async function createGroupRoom(ownerUserId, usersId, roomId, roomName, avatarName) {
+async function createGroupRoom(
+  ownerUserId,
+  usersId,
+  roomId,
+  roomName,
+  avatarName
+) {
   let roomUsers = {};
   for (let userId of usersId) {
     if (userId == ownerUserId) {
       roomUsers[userId] = {
         id: userId,
-        readIdx: -1, 
-        role: USER_TYPE.OWNER
+        readIdx: -1,
+        role: USER_TYPE.OWNER,
       };
-    }
-    else {
+    } else {
       roomUsers[userId] = {
         id: userId,
-        readIdx: -1, 
-        role: USER_TYPE.USER
+        readIdx: -1,
+        role: USER_TYPE.USER,
       };
     }
-
   }
-  initMessage = { 
+  initMessage = {
     id: await generateId(),
     from: ownerUserId,
     to: roomId,
@@ -301,7 +295,7 @@ async function createGroupRoom(ownerUserId, usersId, roomId, roomName, avatarNam
     type: MESSAGE_TYPE.EVENT,
     content: "User created",
     reply: null,
-  }
+  };
   const room = {
     id: roomId,
     name: roomName,
@@ -309,16 +303,16 @@ async function createGroupRoom(ownerUserId, usersId, roomId, roomName, avatarNam
     avatar: `http://${ip}:3000/file?id=${roomId}&fileName=${avatarName}`,
     createon: Date.now(),
     messages: {
-      [initMessage.id]: initMessage
+      [initMessage.id]: initMessage,
     },
     lastMessage: initMessage,
-    users: roomUsers
-  }
-  return room
+    users: roomUsers,
+  };
+  return room;
 }
 
 async function createUser(registerInfo) {
-  const userId = await generateId()
+  const userId = await generateId();
   let user = {
     id: userId,
     firstname: registerInfo.firstname,
@@ -331,14 +325,14 @@ async function createUser(registerInfo) {
       Math.random() * 400
     )}/200/300`,
     friends: {
-      [userId]: {id: userId}
+      [userId]: { id: userId },
     },
     rooms: {},
     socketId: null,
     curRoomId: null,
     status: true,
   };
-  return user
+  return user;
 }
 
 app.get("/messages", authMdWare.isAuth, async (req, res) => {
@@ -397,7 +391,6 @@ app.get("/video", authMdWare.isAuth, (req, res) => {
   }
 });
 
-
 async function getUser(userId) {
   var user = await Users.findOne({ id: userId });
   return {
@@ -414,49 +407,49 @@ async function getLoginUser(userId) {
 }
 
 async function updateUserStatus(userId, status) {
-  await Users.updateOne(
-    { id: userId },
-    { $set: { status: status} }
-  );  
+  await Users.updateOne({ id: userId }, { $set: { status: status } });
 }
 
 async function getUsersInRoom(roomId) {
-  let users = []
+  let users = [];
   for (let userId in (await Rooms.findOne({ id: roomId })).users) {
     let user = await getUser(userId);
     users.push(user);
   }
-  return users
+  return users;
 }
 
 async function getFriends(userId) {
-  let users = []
+  let users = [];
   for (let friendId in (await Users.findOne({ id: userId })).friends) {
     let user = await getUser(friendId);
     users.push(user);
   }
-  return users
+  return users;
 }
 
 io.on("connection", async (socket) => {
-  console.log("user " + socket.user.id + " connected")
-  await Users.updateOne({id: socket.user.id}, {$set: {socketId: socket.id}})
-  await updateUserStatus(socket.user.id, true)
+  console.log("user " + socket.user.id + " connected");
+  await Users.updateOne(
+    { id: socket.user.id },
+    { $set: { socketId: socket.id } }
+  );
+  await updateUserStatus(socket.user.id, true);
   socket.on("initData", async () => {
     socket.emit("sendLoginUser", await getLoginUser(socket.user.id));
     let User = await Users.findOne({ id: socket.user.id });
-    let rooms = []
-    let users = []
+    let rooms = [];
+    let users = [];
     for (let roomId in User.rooms) {
       await joinToRoom(socket, roomId);
-      users = users.concat(await getUsersInRoom(roomId))
+      users = users.concat(await getUsersInRoom(roomId));
       let room = await getRoom(roomId, socket.user.id);
       rooms.push(room);
     }
-    users = users.concat(await getFriends(socket.user.id))
-    await socket.emit("sendUsers", users)
+    users = users.concat(await getFriends(socket.user.id));
+    await socket.emit("sendUsers", users);
     await socket.emit("sendRooms", rooms);
-  })
+  });
 
   // socket.emit("loadComplete");
 
@@ -483,7 +476,7 @@ io.on("connection", async (socket) => {
       { id: socket.user.id },
       { $set: { curRoomId: null, socketId: null, status: false } }
     );
-    const User = await Users.findOne({ id: socket.user.id })
+    const User = await Users.findOne({ id: socket.user.id });
     for (let friendId in User.friends) {
       let socketId = await Users.findOne({ id: friendId }).socketId;
       if (socketId != null) {
@@ -494,92 +487,127 @@ io.on("connection", async (socket) => {
     console.log("user " + socket.user.id + " disconnected");
   });
 
-
-
   socket.on("sendMessage", async (msg, callback) => {
     msg.sent = true;
-    if (msg.type == MESSAGE_TYPE.DOCUMENT || msg.type == MESSAGE_TYPE.IMAGE || msg.type == MESSAGE_TYPE.VIDEO) {
+    if (
+      msg.type == MESSAGE_TYPE.DOCUMENT ||
+      msg.type == MESSAGE_TYPE.IMAGE ||
+      msg.type == MESSAGE_TYPE.VIDEO
+    ) {
       msg.file.src = `http://${ip}:3000/file?id=${msg.id}&fileName=${msg.file.name}`;
       if (msg.type == MESSAGE_TYPE.VIDEO) {
-        msg.file.thumbnail = `http://${ip}:3000/file?id=${msg.id}&fileName=thumbnail.jpg`
+        msg.file.thumbnail = `http://${ip}:3000/file?id=${msg.id}&fileName=thumbnail.jpg`;
       }
     }
-    await Rooms.updateOne({ id: msg.to }, { $set: { [`messages.${msg.id}`]: msg } });
+    await Rooms.updateOne(
+      { id: msg.to },
+      { $set: { [`messages.${msg.id}`]: msg } }
+    );
     await Rooms.updateOne({ id: msg.to }, { $set: { lastMessage: msg } });
     await io.in(msg.to).emit("sendMessage", msg);
     callback();
   });
   socket.on("changeRoomAvatar", async (roomId, fileName) => {
-    Rooms.updateOne({id: roomId}, {$set: {avatar: `http://${ip}:3000/file?id=${roomId}&fileName=${fileName}`}})
-    await io.in(roomId).emit("changeRoomAvatar", roomId, `http://${ip}:3000/file?id=${roomId}&fileName=${fileName}`);
-  })
+    Rooms.updateOne(
+      { id: roomId },
+      {
+        $set: {
+          avatar: `http://${ip}:3000/file?id=${roomId}&fileName=${fileName}`,
+        },
+      }
+    );
+    await io
+      .in(roomId)
+      .emit(
+        "changeRoomAvatar",
+        roomId,
+        `http://${ip}:3000/file?id=${roomId}&fileName=${fileName}`
+      );
+  });
 
   socket.on("changeRoomName", async (roomId, name) => {
-    Rooms.updateOne({id: roomId}, {$set: {name: name}})
+    Rooms.updateOne({ id: roomId }, { $set: { name: name } });
     await io.in(roomId).emit("changeRoomName", roomId, name);
   });
 
   socket.on("newChatUsername", async (username) => {
-    const loginUser = await Users.findOne({id: socket.user.id})
-    const user = await Users.findOne({ username: username })
+    const loginUser = await Users.findOne({ id: socket.user.id });
+    const user = await Users.findOne({ username: username });
 
     if (user == null) {
       // socket.emit("addUser", null);
     } else {
       socket.emit("sendUser", await getUser(user.id));
-      const room = await createOneToOneRoom(loginUser, user) 
-      socket.emit("sendTempOneToOneRoom", room)
+      const room = await createOneToOneRoom(loginUser, user);
+      socket.emit("sendTempOneToOneRoom", room);
     }
   });
 
   socket.on("newChatUserId", async (userId) => {
-    const loginUser = await Users.findOne({id: socket.user.id})
-    const user = await Users.findOne({ id: userId })
-    const room = await createOneToOneRoom(loginUser, user) 
-    socket.emit("sendTempOneToOneRoom", room)
+    const loginUser = await Users.findOne({ id: socket.user.id });
+    const user = await Users.findOne({ id: userId });
+    const room = await createOneToOneRoom(loginUser, user);
+    socket.emit("sendTempOneToOneRoom", room);
   });
 
   socket.on("createGroup", async (usersId, roomId, roomName, avatarName) => {
-    const room = await createGroupRoom(socket.user.id, usersId, roomId, roomName, avatarName) 
-    await Rooms.insertOne(room)
-    for (let userId of usersId) {  
+    const room = await createGroupRoom(
+      socket.user.id,
+      usersId,
+      roomId,
+      roomName,
+      avatarName
+    );
+    await Rooms.insertOne(room);
+    for (let userId of usersId) {
       let socketId = (await Users.findOne({ id: userId })).socketId;
       if (socketId != null) {
         await joinToRoom(await io.sockets.sockets.get(socketId), room.id);
       }
     }
     for (let userId of usersId) {
-      await Users.updateOne({ id: userId }, { $set: { [`rooms.${room.id}`]: {id: room.id} } });
+      await Users.updateOne(
+        { id: userId },
+        { $set: { [`rooms.${room.id}`]: { id: room.id } } }
+      );
       await io.in(room.id).emit("sendUser", await getUser(userId));
-      await io.to(room.id).emit("sendRoom", await getRoom(room.id, socket.user.id));
+      await io
+        .to(room.id)
+        .emit("sendRoom", await getRoom(room.id, socket.user.id));
     }
-    
   });
 
   socket.on("deleteRoom", async (roomId) => {
-    
-    const room = await Rooms.findOne({id: roomId})
-    io.in(room.id).emit("deleteRoom", roomId)
+    const room = await Rooms.findOne({ id: roomId });
+    io.in(room.id).emit("deleteRoom", roomId);
     for (let userId in room.users) {
-      await Users.updateOne({id: userId }, {$unset: {[`rooms.${room.id}`]: 1}});
-      const socketId = (await Users.findOne({id: userId})).socketId
+      await Users.updateOne(
+        { id: userId },
+        { $unset: { [`rooms.${room.id}`]: 1 } }
+      );
+      const socketId = (await Users.findOne({ id: userId })).socketId;
       if (socketId != null) {
         await leaveRoom(await io.sockets.sockets.get(socketId), room.id);
       }
     }
-    await Rooms.deleteOne({id: roomId})
-
+    await Rooms.deleteOne({ id: roomId });
   });
 
   socket.on("addFriend", async (username) => {
-    const loginUser = await Users.findOne({id: socket.user.id})
-    const user = await Users.findOne({ username: username })
+    const loginUser = await Users.findOne({ id: socket.user.id });
+    const user = await Users.findOne({ username: username });
 
     if (user == null) {
       // socket.emit("addUser", null);
     } else {
-      Users.updateOne({ id: socket.user.id }, { $set: { [`friends.${user.id}`]: {id: user.id} } });
-      Users.updateOne({ id: user.id }, { $set: { [`friends.${socket.user.id}`]: {id: socket.user.id} } });
+      Users.updateOne(
+        { id: socket.user.id },
+        { $set: { [`friends.${user.id}`]: { id: user.id } } }
+      );
+      Users.updateOne(
+        { id: user.id },
+        { $set: { [`friends.${socket.user.id}`]: { id: socket.user.id } } }
+      );
       socket.emit("sendUser", await getUser(user.id));
       socket.emit("addFriend", user.id);
       let socketId = (await Users.findOne({ id: user.id })).socketId;
@@ -587,34 +615,46 @@ io.on("connection", async (socket) => {
         io.to(socketId).emit("sendUser", await getUser(socket.user.id));
         io.to(socketId).emit("addFriend", socket.user.id);
       }
-
     }
   });
 
   socket.on("setupOneToOneRoom", async (room, callback) => {
-    await Rooms.insertOne(room)
-    await Users.updateOne({ id: socket.user.id }, { $set: { [`rooms.${room.id}`]: {id: room.id} } });    
+    await Rooms.insertOne(room);
+    await Users.updateOne(
+      { id: socket.user.id },
+      { $set: { [`rooms.${room.id}`]: { id: room.id } } }
+    );
     for (let userId in room.users) {
       if (userId != socket.user.id) {
-        await Users.updateOne({ id: userId }, { $set: { [`rooms.${room.id}`]: {id: room.id} } });
+        await Users.updateOne(
+          { id: userId },
+          { $set: { [`rooms.${room.id}`]: { id: room.id } } }
+        );
         let socketId = (await Users.findOne({ id: userId })).socketId;
         if (socketId != null) {
           await joinToRoom(await io.sockets.sockets.get(socketId), room.id);
           await io.to(socketId).emit("sendUser", await getUser(socket.user.id));
-          await io.to(socketId).emit("sendRoom", await getRoom(room.id, userId));     
+          await io
+            .to(socketId)
+            .emit("sendRoom", await getRoom(room.id, userId));
         }
       }
     }
-    callback()
-  })
-
+    callback();
+  });
 
   socket.on("searchUserId", async (userId) => {
     if ((await Users.findOne({ id: userId })) == null) {
       socket.emit("recieveSearchUserId", null);
     } else {
-      Users.updateOne({ id: socket.user.id }, { $set: { [`friends.${userId}`]: {id: userId} } });
-      Users.updateOne({ id: userId }, { $set: { [`friends.${socket.user.id}`]: {id: socket.user.id} } });
+      Users.updateOne(
+        { id: socket.user.id },
+        { $set: { [`friends.${userId}`]: { id: userId } } }
+      );
+      Users.updateOne(
+        { id: userId },
+        { $set: { [`friends.${socket.user.id}`]: { id: socket.user.id } } }
+      );
       let socketId = (await Users.findOne({ id: userId })).socketId;
       if (socketId != null) {
         let user = await getUserPublicData(socket.user.id);
@@ -624,7 +664,6 @@ io.on("connection", async (socket) => {
       socket.emit("recieveSearchUserId", await getUserPublicData(userId));
     }
   });
-
 
   socket.on("changeRoom", async (roomId) => {
     let curRoomId = (await Users.findOne({ id: socket.user.id })).curRoomId;
@@ -707,12 +746,30 @@ io.on("connection", async (socket) => {
   });
 
   socket.on("setEmote", async (roomId, messageId, userId, emote) => {
-    await Rooms.updateOne({ id: roomId }, { $set: { [`messages.${messageId}.emotes.${{userId, emote}}`]: true } });
-    await io.in(roomId).emit("setEmote", roomId, messageId, userId, emote);
+    const room = await Rooms.findOne({ id: roomId });
+    if (room.messages[messageId].emotes == undefined) {
+      await Rooms.updateOne(
+        { id: roomId },
+        { $set: { [`messages.${messageId}.emotes`]: {} } }
+      );
+      room.messages[messageId].emotes = {}
+    }
+    if (room.messages[messageId].emotes[{'userId': userId, 'emote': emote}] != true) {
+      await Rooms.updateOne(
+        { id: roomId },
+        {
+          $set: { [`messages.${messageId}.emotes.${{'userId': userId, 'emote': emote}}`]: true },
+        }
+      );
+      await io.in(roomId).emit("setEmote", roomId, messageId, userId, emote);
+    }
   });
-  
+
   socket.on("setRead", async (roomId, userId, idx) => {
-    await Rooms.updateOne({ id: roomId }, { $set: { [`users.${userId}.readIdx`]: idx } });
+    await Rooms.updateOne(
+      { id: roomId },
+      { $set: { [`users.${userId}.readIdx`]: idx } }
+    );
     await io.in(roomId).emit("setRead", roomId, userId, idx);
   });
   socket.on("typing", async (roomId, typing) => {
@@ -778,14 +835,13 @@ io.on("connection", async (socket) => {
   });
 });
 
-
 io.use(async (socket, next) => {
   const token = socket.handshake.auth.token;
   try {
     if (await authMdWare.checkAuthToken(token)) {
       socket.user = {
-        id: await authMdWare.getUserId(token)
-      }
+        id: await authMdWare.getUserId(token),
+      };
       next();
     } else {
       next(new Error("not authorized"));
@@ -796,8 +852,6 @@ io.use(async (socket, next) => {
     return next(new Error(e.message));
   }
 });
-
-
 
 http.listen(3000, async () => {
   try {

@@ -304,7 +304,6 @@ class SocketioService {
   }
 
   setEmote(messageId, emote) {
-    store.setEmote(roomId, messageId, userId, emote)
     this.socket.emit("setEmote", store.currentRoomId, messageId, store.loginUser.id, emote)
   }
 

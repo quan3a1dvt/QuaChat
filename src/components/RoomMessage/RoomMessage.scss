@@ -25,12 +25,13 @@
 }
 
 .vtc-message-menu {
-  width: 224px;
+  width: 237px;
   background-color: transparent;
   border: transparent;
   box-shadow: none;
 
   .vtc-menu-list{
+    width: 180px;
     box-shadow: rgba(0, 0, 0, 0.15) 0px 0px 10px;
     background-color: white; 
   }
@@ -44,7 +45,7 @@
     box-shadow: rgba(0, 0, 0, 0.15) 0px 0px 10px;
   }
   .vtc-emoji-template {
-    font-size: 26px;
+    font-size: 28px;
     transition: transform .2s;
   }
   .vtc-emoji-template:hover{
