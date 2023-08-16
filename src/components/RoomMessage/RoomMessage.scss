@@ -18,14 +18,19 @@
   }
 
   .vtc-message-card {
+    width: fit-content;
     border: rgba(0, 0, 0, 0.1) 1px solid;
     padding: 6px 6px 1px 6px;
     border-radius: 6px 6px 6px 6px;
   }
+
+  .vtc-emote {
+    display: flex;
+  }
 }
 
 .vtc-message-menu {
-  width: 237px;
+  width: 207px;
   background-color: transparent;
   border: transparent;
   box-shadow: none;
@@ -45,7 +50,7 @@
     box-shadow: rgba(0, 0, 0, 0.15) 0px 0px 10px;
   }
   .vtc-emoji-template {
-    font-size: 28px;
+    // font-size: 28px;
     transition: transform .2s;
   }
   .vtc-emoji-template:hover{

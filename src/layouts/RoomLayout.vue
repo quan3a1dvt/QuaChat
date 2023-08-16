@@ -7,6 +7,14 @@ import {
   computed,
   watch,
 } from "vue";
+import {
+  URL,
+  ROOM_TYPE,
+  USER_TYPE,
+  USER_TYPE2TEXT,
+  MESSAGE_TYPE,
+  MESSAGE_TYPE2TEXT
+} from '../assets/constants'
 import { useRouter } from "vue-router";
 import axios from "axios";
 import VueVideoThumbnail from "vue-video-thumbnail";
@@ -256,6 +264,10 @@ function setEmote(messageId, emote) {
   SocketioService.setEmote(messageId, emote)
 }
 
+function removeEmote(messageId, emote) {
+  SocketioService.removeEmote(messageId, emote)
+}
+
 //bottom
 
 const qFileInput = ref(null);
@@ -446,6 +458,7 @@ const style = computed(() => ({
 }));
 </script>
 <template>
+  
   <div class="WAL position-relative" :style=style>
     <q-layout view="lHr lpR lFr" class="WAL__layout" container>
       <q-header elevated>
@@ -920,7 +933,7 @@ const style = computed(() => ({
           <div
             style="position:absolute;bottom:32px;right:32px"
           >
-            <q-btn fab icon="add" color="primary">
+            <q-btn fab icon="add" color="teal-5">
               <q-menu
                 style="min-width: 300px"
                 @before-show="
@@ -1187,6 +1200,7 @@ const style = computed(() => ({
               :login-user-id="store.loginUser.id"
               @reply="(message) => setReplyMsg(message)"
               @send-emote="(emote, messageId) => setEmote(messageId, emote)"
+              @remove-emote="(emote, messageId) => removeEmote(messageId, emote)"
             />
           </q-scroll-area>
           <q-page-sticky
@@ -1546,5 +1560,5 @@ const style = computed(() => ({
 .page-chat
   padding: 0px 16px 0px 16px
   // background-color: #F9F9F9
-  background-image: url('http://localhost:3000/assets?fileName=812556.jpg')
+  background-image: url('http://localhost:3000/assets?fileName=wallpaper.jpg')
 </style>

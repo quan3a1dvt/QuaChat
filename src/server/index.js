@@ -754,15 +754,30 @@ io.on("connection", async (socket) => {
       );
       room.messages[messageId].emotes = {}
     }
-    if (room.messages[messageId].emotes[{'userId': userId, 'emote': emote}] != true) {
+    if (room.messages[messageId].emotes[[userId,emote]] == undefined) {
       await Rooms.updateOne(
         { id: roomId },
         {
-          $set: { [`messages.${messageId}.emotes.${{'userId': userId, 'emote': emote}}`]: true },
+          $set: { [`messages.${messageId}.emotes.${[userId,emote]}`]: [userId,emote] },
         }
       );
       await io.in(roomId).emit("setEmote", roomId, messageId, userId, emote);
     }
+    
+  });
+
+  socket.on("removeEmote", async (roomId, messageId, emote) => {
+    // const room = await Rooms.findOne({ id: roomId });
+    // let emote = room.messages[messageId].emotes
+    // delete emotes[emote];
+    await Rooms.updateOne(
+      { id: roomId },
+      {
+        $unset: { [`messages.${messageId}.emotes.${emote}`]: "" },
+      }
+    );
+    await io.in(roomId).emit("removeEmote", roomId, messageId, emote);
+    
   });
 
   socket.on("setRead", async (roomId, userId, idx) => {

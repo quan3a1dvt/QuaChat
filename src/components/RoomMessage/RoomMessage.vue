@@ -14,139 +14,230 @@
         </q-avatar>
       </div>
       <div>
-        <div
-          class="vtc-message-card bg-white"
-          :sent="sent"
-          :class="{ 'bg-green-2': sent }"
-        >
-          <q-menu 
-            touch-position 
-            context-menu 
-            square
-            class="vtc-message-menu"
-          >
-            <div class="vtc-emoji-wrapper">
-              <div class="vtc-emoji-template" @click="this.$emit('send-emote','❤️', message.id)">❤️</div>
-              <div class="vtc-emoji-template" @click="this.$emit('send-emote','😆', message.id)">😆</div>
-              <div class="vtc-emoji-template" @click="this.$emit('send-emote','😮', message.id)">😮</div>
-              <div class="vtc-emoji-template" @click="this.$emit('send-emote','😠', message.id)">😠</div>
-              <div class="vtc-emoji-template" @click="this.$emit('send-emote','👍', message.id)">👍</div>
-              <q-btn round icon="add" class="bg-grey-3" size="md"></q-btn>
-            </div>
-            <q-list class="vtc-menu-list">
-              <q-item
-                clickable
-                v-close-popup
-                @click="this.$emit('reply', message)"
-                dense
-                style="padding: 9px 16px"
-              >
-                <q-item-section>Reply</q-item-section>
-              </q-item>
-              <q-item
-                clickable
-                v-close-popup
-                @click="copyText(message)"
-                dense
-                style="padding: 9px 16px"
-              >
-                <q-item-section>Copy</q-item-section>
-              </q-item>
-              <q-item
-                clickable
-                v-close-popup
-                @click="copyText(message)"
-                dense
-                style="padding: 9px 16px"
-              >
-                <q-item-section>Emote</q-item-section>
-              </q-item>
-              <q-separator />
-            </q-list>
-          </q-menu>
-
+        <div class="flex" :class="{ 'justify-end': sent }">
           <div
-            class="bg-grey-4 q-mb-sm q-px-sm q-py-xs reply-box"
-            v-if="message.replyMsg != null"
+            class="vtc-message-card bg-white"
+            :sent="sent"
+            :class="{ 'bg-green-2': sent }"
           >
-            <span class="text-bold text-green-6">{{
-              message.replyMsg.from == loginUserId ? "You" : user.displayname
-            }}</span>
-            <div v-if="message.replyMsg.type == MESSAGE_TYPE.TEXT">
-              {{ message.replyMsg.content }}
-            </div>
-            <div v-if="message.replyMsg.type != MESSAGE_TYPE.TEXT">
-              <span class="text-capitalize">{{
-                MESSAGE_TYPE2TEXT[message.replyMsg.type]
-              }}</span>
-            </div>
-          </div>
-
-          <div v-if="message.type == MESSAGE_TYPE.TEXT">
-            {{ message.content }}
-          </div>
-
-          <div v-if="message.type == MESSAGE_TYPE.IMAGE">
-            <img
-              style="border-radius: 10px; max-height: 25vh; max-width: 35vh"
-              :src="message.file.src"
-            />
-          </div>
-          <div v-if="message.type == MESSAGE_TYPE.VIDEO">
-            <video
-              preload="metadata"
-              style="border-radius: 10px"
-              controls
-              width="320"
-              :src="message.file.src"
-              type="video/mp4"
-            ></video>
-          </div>
-          <div v-if="message.type == MESSAGE_TYPE.DOCUMENT">
-            <q-item
-              @click="download(message.file.id, message.file.name)"
-              clickable
-              v-ripple
-              class="q-px-sm bg-blue-grey-1 q-mb-xs"
-              style="border-radius: 0.7rem"
-            >
-              <q-item-section avatar top>
-                <q-avatar icon="mdi-file" color="teal" text-color="white" />
-              </q-item-section>
-
-              <q-item-section>
-                <q-item-label lines="1">{{ message.file.name }}</q-item-label>
-                <q-item-label caption>
-                  {{ message.file.name.split(".").pop().toUpperCase() }}
-                  {{ convertFileSize(message.file.size) }}</q-item-label
+            <q-menu touch-position context-menu square class="vtc-message-menu">
+              <div class="vtc-emoji-wrapper">
+                <q-btn
+                  size="xl"
+                  dense
+                  flat
+                  round
+                  padding="0px"
+                  unelevated
+                  rounded
+                  v-close-popup
+                  class="vtc-emoji-template"
+                  @click="this.$emit('send-emote', '❤️', message.id)"
+                  >❤️</q-btn
                 >
-              </q-item-section>
-            </q-item>
-          </div>
-          <div
-            class="fit-content"
-            :class="{
-              'q-ml-lg': true,
-            }"
-          >
-            <div style="display: flex; justify-content: end">
-              <div style="display: block">
-                <span style="opacity: 0.6; font-size: x-small">{{
-                  getTimeFromStamp(message.createon)
+                <q-btn
+                  size="xl"
+                  dense
+                  flat
+                  round
+                  padding="0px"
+                  unelevated
+                  rounded
+                  v-close-popup
+                  class="vtc-emoji-template"
+                  @click="this.$emit('send-emote', '😆', message.id)"
+                  >😆</q-btn
+                >
+                <q-btn
+                  size="xl"
+                  dense
+                  flat
+                  round
+                  padding="0px"
+                  unelevated
+                  rounded
+                  v-close-popup
+                  class="vtc-emoji-template"
+                  @click="this.$emit('send-emote', '😮', message.id)"
+                  >😮</q-btn
+                >
+                <q-btn
+                  size="xl"
+                  dense
+                  flat
+                  round
+                  padding="0px"
+                  unelevated
+                  rounded
+                  v-close-popup
+                  class="vtc-emoji-template"
+                  @click="this.$emit('send-emote', '😠', message.id)"
+                  >😠</q-btn
+                >
+                <q-btn
+                  size="xl"
+                  dense
+                  flat
+                  round
+                  padding="0px"
+                  unelevated
+                  rounded
+                  v-close-popup
+                  class="vtc-emoji-template"
+                  @click="this.$emit('send-emote', '👍', message.id)"
+                  >👍</q-btn
+                >
+                <q-btn round icon="add" class="bg-grey-3" size="md"></q-btn>
+              </div>
+              <q-list class="vtc-menu-list">
+                <q-item
+                  clickable
+                  v-close-popup
+                  @click="this.$emit('reply', message)"
+                  dense
+                  style="padding: 9px 16px"
+                >
+                  <q-item-section>Reply</q-item-section>
+                </q-item>
+                <q-item
+                  clickable
+                  v-close-popup
+                  @click="copyText(message)"
+                  dense
+                  style="padding: 9px 16px"
+                >
+                  <q-item-section>Copy</q-item-section>
+                </q-item>
+                <q-item
+                  clickable
+                  v-close-popup
+                  @click="copyText(message)"
+                  dense
+                  style="padding: 9px 16px"
+                >
+                  <q-item-section>Emote</q-item-section>
+                </q-item>
+                <q-separator />
+              </q-list>
+            </q-menu>
+
+            <div
+              class="bg-grey-4 q-mb-sm q-px-sm q-py-xs reply-box"
+              v-if="message.replyMsg != null"
+            >
+              <span class="text-bold text-green-6">{{
+                message.replyMsg.from == loginUserId ? "You" : user.displayname
+              }}</span>
+              <div v-if="message.replyMsg.type == MESSAGE_TYPE.TEXT">
+                {{ message.replyMsg.content }}
+              </div>
+              <div v-if="message.replyMsg.type != MESSAGE_TYPE.TEXT">
+                <span class="text-capitalize">{{
+                  MESSAGE_TYPE2TEXT[message.replyMsg.type]
                 }}</span>
-                <q-icon
-                  v-if="message.sent == true && sent"
-                  color="primary"
-                  class="q-ml-xs"
-                  name="mdi-check-all"
-                />
+              </div>
+            </div>
+
+            <div v-if="message.type == MESSAGE_TYPE.TEXT">
+              {{ message.content }}
+            </div>
+
+            <div v-if="message.type == MESSAGE_TYPE.IMAGE">
+              <img
+                style="border-radius: 10px; max-height: 25vh; max-width: 35vh"
+                :src="message.file.src"
+              />
+            </div>
+            <div v-if="message.type == MESSAGE_TYPE.VIDEO">
+              <video
+                preload="metadata"
+                style="border-radius: 10px"
+                controls
+                width="320"
+                :src="message.file.src"
+                type="video/mp4"
+              ></video>
+            </div>
+            <div v-if="message.type == MESSAGE_TYPE.DOCUMENT">
+              <q-item
+                @click="download(message.file.id, message.file.name)"
+                clickable
+                v-ripple
+                class="q-px-sm bg-blue-grey-1 q-mb-xs"
+                style="border-radius: 0.7rem"
+              >
+                <q-item-section avatar top>
+                  <q-avatar icon="mdi-file" color="teal" text-color="white" />
+                </q-item-section>
+
+                <q-item-section>
+                  <q-item-label lines="1">{{ message.file.name }}</q-item-label>
+                  <q-item-label caption>
+                    {{ message.file.name.split(".").pop().toUpperCase() }}
+                    {{ convertFileSize(message.file.size) }}</q-item-label
+                  >
+                </q-item-section>
+              </q-item>
+            </div>
+            <div
+              class="fit-content"
+              :class="{
+                'q-ml-lg': true,
+              }"
+            >
+              <div style="display: flex; justify-content: end">
+                <div style="display: block">
+                  <span style="opacity: 0.6; font-size: x-small">{{
+                    getTimeFromStamp(message.createon)
+                  }}</span>
+                  <q-icon
+                    v-if="message.sent == true && sent"
+                    color="primary"
+                    class="q-ml-xs"
+                    name="mdi-check-all"
+                  />
+                </div>
               </div>
             </div>
           </div>
         </div>
-        <div>
-          <template v-for="emote in message.emotes">
-            <span>{{ emote.emote }}</span>
+        <div
+          class="vtc-emote q-mt-xs"
+          :class="{ 'justify-end': sent, 'justify-start': !sent }"
+        >
+          <template v-for="emote in emotes">
+            <q-btn
+              flat
+              dense
+              unelevated
+              padding="0px"
+              @click="
+                {
+                  if (emoteSender = message.emotes[[loginUserId, emote.emote]] != undefined) {
+                    this.$emit(
+                      'remove-emote',
+                      [loginUserId, emote.emote],
+                      message.id
+                    )
+                  } else {
+                    this.$emit('send-emote', emote.emote, message.id);
+                  }
+                }
+              "
+            >
+              <div
+                class="bg-teal-1 q-pr-xs"
+                style="border-radius: 3px"
+                :class="{
+                  'bg-teal-3': emoteSender = message.emotes[[loginUserId, emote.emote]] != undefined,
+                  'q-mr-xs': !sent,
+                  'q-ml-xs': sent,
+                }"
+              >
+                <span>{{ emote.emote }}</span>
+                <span>{{ emote.val }}</span>
+              </div>
+            </q-btn>
           </template>
         </div>
       </div>
@@ -163,6 +254,14 @@ import {
   computed,
   watch,
 } from "vue";
+import {
+  URL,
+  ROOM_TYPE,
+  USER_TYPE,
+  USER_TYPE2TEXT,
+  MESSAGE_TYPE,
+  MESSAGE_TYPE2TEXT,
+} from "../../assets/constants";
 import dateFormat, { masks } from "dateformat";
 
 const props = defineProps({
@@ -171,7 +270,20 @@ const props = defineProps({
   message: { type: Object, required: true },
 });
 
-const emit = defineEmits(['reply', 'send-emote'])
+const emit = defineEmits(["reply", "send-emote", "remove-emote"]);
+
+const emotes = computed(() => {
+  let es = {};
+  for (let key in props.message.emotes) {
+    const emote = props.message.emotes[key];
+    if (es[emote[1]] != undefined) {
+      es[emote[1]].val = es[emote[1]].val + 1;
+    } else {
+      es[emote[1]] = { emote: emote[1], val: 1 };
+    }
+  }
+  return es;
+});
 
 function showDate() {}
 
@@ -218,5 +330,4 @@ function download(fileId, fileName) {
 
 <style lang="scss">
 @import "./RoomMessage.scss";
-
 </style>

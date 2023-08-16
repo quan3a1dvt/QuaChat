@@ -67,9 +67,16 @@ import {
   computed,
   watch,
 } from "vue";
-import dateFormat, { masks } from "dateformat";
 
-console.log(MESSAGE_TYPE)
+import {
+  URL,
+  ROOM_TYPE,
+  USER_TYPE,
+  USER_TYPE2TEXT,
+  MESSAGE_TYPE,
+  MESSAGE_TYPE2TEXT
+} from '../../assets/constants'
+import dateFormat, { masks } from "dateformat";
 
 const props = defineProps({
   room: {

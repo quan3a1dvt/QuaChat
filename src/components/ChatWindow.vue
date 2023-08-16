@@ -24,7 +24,8 @@
             :message="message"
             :user="store.users[message.from]"
             @reply="(message) => this.$emit('reply', message)"
-            @send-emote="(emote, messageId) => this.$emit('send-emote', emote, messageId)"
+            @send-emote="(emote, messageId) => {this.$emit('send-emote', emote, messageId)}"
+            @remove-emote="(emote, messageId) => {this.$emit('remove-emote', emote, messageId)}"
           ></room-message>
         </div>
       </div>
@@ -57,7 +58,7 @@ const props = defineProps({
   messages: { type: Object, required: true },
   readIdx: { type: Number, required: true },
 });
-const emit = defineEmits(['reply', 'send-emote'])
+const emit = defineEmits(['reply', 'send-emote', 'remove-emote'])
 
 const loadValue = 7;
 const loadIdxStart = ref(Math.max(0, props.readIdx - loadValue))

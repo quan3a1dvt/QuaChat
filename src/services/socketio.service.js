@@ -143,6 +143,11 @@ class SocketioService {
     this.socket.on("setEmote", (roomId, messageId, userId, emote) => {
       store.setEmote(roomId, messageId, userId, emote)
     });
+    
+    this.socket.on("removeEmote", (roomId, messageId, emote) => {
+      store.removeEmote(roomId, messageId, emote)
+    });
+    
     this.socket.on("setAdmin", (roomId, userId) => {
       store.rooms.get(roomId).usersProperty[userId].role = "admin";
     });
@@ -305,6 +310,10 @@ class SocketioService {
 
   setEmote(messageId, emote) {
     this.socket.emit("setEmote", store.currentRoomId, messageId, store.loginUser.id, emote)
+  }
+
+  removeEmote(messageId, emote) {
+    this.socket.emit("removeEmote", store.currentRoomId, messageId, emote)
   }
 
   setRead(roomId, userId, idx) {
