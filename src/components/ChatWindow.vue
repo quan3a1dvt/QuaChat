@@ -1,7 +1,7 @@
 <template>
   <div>
 
-    <q-infinite-scroll reverse @load="onLoad">
+    <q-infinite-scroll reverse @load="onLoad" ref=“infiniteScroll”>
       <template v-slot:loading>
         <div class="row justify-center q-my-md">
           <q-spinner color="primary" name="dots" size="40px" />
@@ -20,9 +20,10 @@
           v-if="message.type != MESSAGE_TYPE.EVENT"
         >
           <room-message 
-            :login-user-id="store.loginUser.id"
+            :login-user-id="this.loginUserId"
             :message="message"
-            :user="store.users[message.from]"
+            :user="users[message.from]"
+            :id=message.id
             @reply="(message) => this.$emit('reply', message)"
             @send-emote="(emote, messageId) => {this.$emit('send-emote', emote, messageId)}"
             @remove-emote="(emote, messageId) => {this.$emit('remove-emote', emote, messageId)}"
@@ -32,52 +33,55 @@
     </q-infinite-scroll>
   </div>
 </template>
-
-<script setup name="Room">
-import {
-  ref,
-  onMounted,
-  onBeforeUnmount,
-  nextTick,
-  computed,
-  watch,
-} from "vue";
-import {
-  ROOM_TYPE,
-  USER_TYPE,
-  USER_TYPE2TEXT,
-  MESSAGE_TYPE,
-  MESSAGE_TYPE2TEXT,
-} from "../assets/varible";
+<script>
 import RoomMessage from "./RoomMessage/RoomMessage.vue";
 import dateFormat, { masks } from "dateformat";
-import store from "../stores/store.js";
+export default {
+  name: 'ChatWindow',
+  components: {
+		RoomMessage
+	},
 
-const props = defineProps({
-  loginUserId: { type:String, required: true },
-  messages: { type: Object, required: true },
-  readIdx: { type: Number, required: true },
-});
-const emit = defineEmits(['reply', 'send-emote', 'remove-emote'])
-
-const loadValue = 7;
-const loadIdxStart = ref(Math.max(0, props.readIdx - loadValue))
-const msgsIdArr = computed(() => {
-  return Object.keys(props.messages)
-})
-const msgsIdArrLoad = computed(() => {
-  return msgsIdArr.value.slice(loadIdxStart.value)
-})
-
-
-
-function onLoad(index, done) {
-  setTimeout(() => {
-    loadIdxStart.value = Math.max(0, loadIdxStart.value - 7);
-    done();
-  }, 200);
+  props: {
+    loginUserId: { type:String, required: true },
+    messages: { type: Object, required: true },
+    readIdx: { type: Number, required: true },
+    users: { type: Object, required: true }
+  },
+  emit: [
+    'reply',
+    'send-emote',
+    'remove-emote'
+  ],
+  data() {
+    return {
+      loadValue: 7,
+      loadIdxStart: Math.max(0, this.readIdx - this.loadValue),
+    }
+  },
+  computed: {
+    msgsIdArr() {
+      return Object.keys(this.messages)
+    },
+    msgsIdArrLoad() {
+      return this.msgsIdArr.slice(this.loadIdxStart)
+    }
+  },
+  method: {
+    onLoad(index, done) {
+      setTimeout(() => {
+        this.loadIdxStart = Math.max(0, this.loadIdxStart - this.loadValue);
+        if (this.loadIdxStart == 0) {
+          console.log("das")
+          this.$refs.infiniteScroll.stop()
+        }
+        done();
+      }, 1000);
+    }
+  }
 }
 </script>
+
 
 <style lang="scss" scoped>
 .dialog {

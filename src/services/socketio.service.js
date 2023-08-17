@@ -1,6 +1,5 @@
 import { io, protocol } from "socket.io-client";
 import axios from "axios";
-import cypher from "./cypher.ts";
 import store from "../stores/store.js";
 const ip = process.env.IP;
 const socketport = `http://${ip}:3000`;

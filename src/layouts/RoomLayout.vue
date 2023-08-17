@@ -93,10 +93,10 @@ const convertFileSize = (size) => {
 };
 
 function getURLFromFile(file) {
-  return URL.createObjectURL(file);
+  return window.URL.createObjectURL(file);
 }
 
-async function getFileFromUrl(url, name, defaultType = 'image/jpeg'){
+async function getFileFromUrl(url, name, defaultType = 'image/jpeg') {
   const response = await fetch(url);
   const data = await response.blob();
   return new File([data], name, {
@@ -284,6 +284,22 @@ const onSelectEmoji = (emoji) => {
   inputMessageText.value = inputMessageText.value + emoji.i;
 };
 
+
+const tag = computed(() => {
+  const index = inputMessageText.value.lastIndexOf('@')
+  if (index > -1) {
+    if (index > 0) {
+      if (inputMessageText.value.charAt(index - 1) != ' ') return null
+    }
+    const ttag = inputMessageText.value.substring(index + 1)
+    if (ttag.lastIndexOf(' ') == -1) {
+      return ttag
+    }
+    else return null
+  }
+  else return null
+});
+
 async function getTextMsg() {
   return {
     id: await generateId(),
@@ -308,8 +324,8 @@ async function getFileMsg(file) {
     type: file.type.startsWith("image")
       ? MESSAGE_TYPE.IMAGE
       : file.type.startsWith("video")
-      ? MESSAGE_TYPE.VIDEO
-      : MESSAGE_TYPE.DOCUMENT,
+        ? MESSAGE_TYPE.VIDEO
+        : MESSAGE_TYPE.DOCUMENT,
     file: {
       name: file.name,
       src: getURLFromFile(file),
@@ -439,7 +455,7 @@ onMounted(async () => {
     setTimeout(() => {
       socket.emit("initData");
     }, 1000)
-    
+
   });
   watch(currentRoom, (newValue) => {
     if (newValue != null) {
@@ -458,22 +474,11 @@ const style = computed(() => ({
 }));
 </script>
 <template>
-  
   <div class="WAL position-relative" :style=style>
     <q-layout view="lHr lpR lFr" class="WAL__layout" container>
       <q-header elevated>
-        <q-toolbar
-          style="height: 65px"
-          class="bg-white text-black"
-          v-if="currentRoomId != null"
-        >
-          <q-btn
-            round
-            flat
-            icon="keyboard_arrow_left"
-            class="WAL__drawer-open q-mr-sm"
-            @click="toggleLeftDrawer"
-          />
+        <q-toolbar style="height: 65px" class="bg-white text-black" v-if="currentRoomId != null">
+          <q-btn round flat icon="keyboard_arrow_left" class="WAL__drawer-open q-mr-sm" @click="toggleLeftDrawer" />
 
           <q-btn round flat class="q-ml-sm">
             <q-avatar>
@@ -482,140 +487,56 @@ const style = computed(() => ({
             <q-menu @hide="roomTab = 'overview'">
               <q-splitter class="bg-grey-2">
                 <template v-slot:before>
-                  <q-tabs
-                    v-model="roomTab"
-                    indicator-color="teal-6"
-                    vertical
-                    inline-label
-                  >
-                    <q-tab
-                      name="overview"
-                      style="justify-content: flex-start"
-                      no-caps
-                    >
+                  <q-tabs v-model="roomTab" indicator-color="teal-6" vertical inline-label>
+                    <q-tab name="overview" style="justify-content: flex-start" no-caps>
                       <q-icon size="sm" name="mdi-information-outline"></q-icon>
                       <span class="q-ml-sm">Overview</span>
                     </q-tab>
-                    <q-tab
-                      name="members"
-                      style="justify-content: flex-start"
-                      no-caps
-                      v-if="currentRoom.type == ROOM_TYPE.GROUP_ROOM"
-                    >
-                      <q-icon
-                        size="sm"
-                        name="mdi-account-group-outline"
-                      ></q-icon>
+                    <q-tab name="members" style="justify-content: flex-start" no-caps
+                      v-if="currentRoom.type == ROOM_TYPE.GROUP_ROOM">
+                      <q-icon size="sm" name="mdi-account-group-outline"></q-icon>
                       <span class="q-ml-sm">Members</span>
                     </q-tab>
-                    <q-tab
-                      name="media"
-                      style="justify-content: flex-start"
-                      no-caps
-                    >
-                      <q-icon
-                        size="sm"
-                        name="mdi-image-multiple-outline"
-                      ></q-icon>
+                    <q-tab name="media" style="justify-content: flex-start" no-caps>
+                      <q-icon size="sm" name="mdi-image-multiple-outline"></q-icon>
                       <span class="q-ml-sm">Media</span>
                     </q-tab>
-                    <q-tab
-                      name="files"
-                      style="justify-content: flex-start"
-                      no-caps
-                    >
+                    <q-tab name="files" style="justify-content: flex-start" no-caps>
                       <q-icon size="sm" name="mdi-file-outline"></q-icon>
                       <span class="q-ml-sm">Files</span>
                     </q-tab>
                   </q-tabs>
                 </template>
                 <template v-slot:after>
-                  <q-tab-panels
-                    vertical
-                    v-model="roomTab"
-                    animated
-                    style="width: 340px"
-                  >
+                  <q-tab-panels vertical v-model="roomTab" animated style="width: 340px">
                     <q-tab-panel class="q-px-lg" name="overview">
-                      <q-btn
-                        round
-                        flat
-                        @click="qFileAvatarCurrentRoom.$el.click()"
-                        v-if="currentRoom.type == ROOM_TYPE.GROUP_ROOM"
-                      >
+                      <q-btn round flat @click="qFileAvatarCurrentRoom.$el.click()"
+                        v-if="currentRoom.type == ROOM_TYPE.GROUP_ROOM">
                         <q-avatar size="80px" class="q-pa-none profilepic">
-                          <img
-                            class="profilepic__image"
-                            :src="currentRoom.avatar"
-                          />
-                          <q-icon
-                            class="profilepic__content"
-                            size="20px"
-                            color="white"
-                            name="mdi-pencil-outline"
-                          >
+                          <img class="profilepic__image" :src="currentRoom.avatar" />
+                          <q-icon class="profilepic__content" size="20px" color="white" name="mdi-pencil-outline">
                           </q-icon>
                         </q-avatar>
                       </q-btn>
-                      <q-avatar
-                        v-if="currentRoom.type != ROOM_TYPE.GROUP_ROOM"
-                        size="80px"
-                        class="q-pa-none"
-                      >
+                      <q-avatar v-if="currentRoom.type != ROOM_TYPE.GROUP_ROOM" size="80px" class="q-pa-none">
                         <img :src="currentRoom.avatar" />
                       </q-avatar>
-                      <q-file
-                        ref="qFileAvatarCurrentRoom"
-                        style="display: none"
-                        v-model="inputFileAvatarCurrentRoom"
-                        accept=".jpg, .png"
-                        @update:model-value="changeRoomAvatar()"
-                      ></q-file>
+                      <q-file ref="qFileAvatarCurrentRoom" style="display: none" v-model="inputFileAvatarCurrentRoom"
+                        accept=".jpg, .png" @update:model-value="changeRoomAvatar()"></q-file>
                       <div class="q-mt-md">
-                        <q-btn
-                          flat
-                          no-caps
-                          dense
-                          class="btn-hover-remove text-h6 text-weight-medium q-pa-none"
-                          @click="editRoomName = currentRoom.name"
-                        >
+                        <q-btn flat no-caps dense class="btn-hover-remove text-h6 text-weight-medium q-pa-none"
+                          @click="editRoomName = currentRoom.name">
                           {{ currentRoom.name }}
-                          <q-popup-edit
-                            v-model="editRoomName"
-                            v-slot="scope"
-                            style="width: 260px"
-                          >
-                            <q-input
-                              class="smaller-input"
-                              v-model="scope.value"
-                              color="teal-6"
-                              dense
-                              autofocus
-                              @keyup.enter="scope.set"
-                            />
-                            <div
-                              style="display: flex; justify-content: flex-end"
-                              class="q-mt-md"
-                            >
-                              <q-btn
-                                dense
-                                no-caps
-                                unelevated
-                                class="full-width shadow-1"
-                                label="Cancel"
-                                @click.stop.prevent="scope.cancel"
-                              />
+                          <q-popup-edit v-model="editRoomName" v-slot="scope" style="width: 260px">
+                            <q-input class="smaller-input" v-model="scope.value" color="teal-6" dense autofocus
+                              @keyup.enter="scope.set" />
+                            <div style="display: flex; justify-content: flex-end" class="q-mt-md">
+                              <q-btn dense no-caps unelevated class="full-width shadow-1" label="Cancel"
+                                @click.stop.prevent="scope.cancel" />
                               <span class="q-mx-xs"></span>
-                              <q-btn
-                                dense
-                                no-caps
-                                unelevated
-                                class="full-width shadow-1 text-white bg-teal-6"
-                                label="Save"
-                                @click.stop.prevent="scope.set"
-                                @click="saveRoomName()"
-                                :disable="scope.initialValue === scope.value"
-                              />
+                              <q-btn dense no-caps unelevated class="full-width shadow-1 text-white bg-teal-6"
+                                label="Save" @click.stop.prevent="scope.set" @click="saveRoomName()"
+                                :disable="scope.initialValue === scope.value" />
                             </div>
                           </q-popup-edit>
                         </q-btn>
@@ -628,29 +549,14 @@ const style = computed(() => ({
                         </div>
                       </div>
                       <q-separator class="q-mt-md" />
-                      <q-btn
-                        class="text-red text-weight-light full-width shadow-1 q-mt-sm"
-                        dense
-                        no-caps
-                        unelevated
-                        v-if="
-                          currentRoom.type == ROOM_TYPE.GROUP_ROOM &&
-                          currentRoom.users[store.loginUser.id].role >=
-                            USER_TYPE.OWNER
-                        "
-                        @click="deleteRoom(currentRoomId)"
-                        v-close-popup
-                      >
+                      <q-btn class="text-red text-weight-light full-width shadow-1 q-mt-sm" dense no-caps unelevated v-if="currentRoom.type == ROOM_TYPE.GROUP_ROOM &&
+                        currentRoom.users[store.loginUser.id].role >=
+                        USER_TYPE.OWNER
+                        " @click="deleteRoom(currentRoomId)" v-close-popup>
                         Delete
                       </q-btn>
-                      <q-btn
-                        class="text-red text-weight-light full-width shadow-1 q-mt-sm"
-                        dense
-                        no-caps
-                        unelevated
-                        v-if="currentRoom.type == ROOM_TYPE.GROUP_ROOM"
-                        v-close-popup
-                      >
+                      <q-btn class="text-red text-weight-light full-width shadow-1 q-mt-sm" dense no-caps unelevated
+                        v-if="currentRoom.type == ROOM_TYPE.GROUP_ROOM" v-close-popup>
                         Exit Group
                       </q-btn>
                     </q-tab-panel>
@@ -659,82 +565,41 @@ const style = computed(() => ({
                       <div class="text-h6 text-weight-medium">Media</div>
                       <q-scroll-area style="height: 400px">
                         <div class="row q-col-gutter-sm q-pa-xs">
-                          <q-dialog
-                            v-model="mediaDialog"
-                            v-if="selectedMsg != null"
-                          >
+                          <q-dialog v-model="mediaDialog" v-if="selectedMsg != null">
                             <div v-if="selectedMsg.type == MESSAGE_TYPE.VIDEO">
-                              <video
-                                preload="metadata"
-                                controls
-                                :src="selectedMsg.file.src"
-                                type="video/mp4"
-                              ></video>
+                              <video preload="metadata" controls :src="selectedMsg.file.src" type="video/mp4"></video>
                             </div>
-                            <q-img
-                              v-if="selectedMsg.type == MESSAGE_TYPE.IMAGE"
-                              :src="selectedMsg.file.src"
-                            ></q-img>
+                            <q-img v-if="selectedMsg.type == MESSAGE_TYPE.IMAGE" :src="selectedMsg.file.src"></q-img>
                           </q-dialog>
-                          <template
-                            v-for="message in currentRoom.messages"
-                            :key="message.id"
-                          >
-                            <div
-                              class="col-4"
-                              v-if="
-                                message.type == MESSAGE_TYPE.IMAGE ||
-                                message.type == MESSAGE_TYPE.VIDEO
-                              "
-                            >
-                              <q-btn
-                                class="q-pa-none"
-                                style="width: 85px; height:85px; border-radius: 8px"
-                                unelevated
+                          <template v-for="message in currentRoom.messages" :key="message.id">
+                            <div class="col-4" v-if="message.type == MESSAGE_TYPE.IMAGE ||
+                              message.type == MESSAGE_TYPE.VIDEO
+                              ">
+                              <q-btn class="q-pa-none" style="width: 85px; height:85px; border-radius: 8px" unelevated
                                 @click="
                                   selectedMsg = message;
-                                  mediaDialog = true;
-                                "
-                              >
-                               
-                                <q-img
-                                  v-if="message.type == MESSAGE_TYPE.IMAGE"
-                                  style="width: 85px; border-radius: 8px"
-                                  :src="message.file.src"
-                                  :ratio="1"
-                                />
+                                mediaDialog = true;
+                                ">
 
-                                <video
-                                  v-if="message.type == MESSAGE_TYPE.VIDEO"
-                                  style="position: absolute;
+                                <q-img v-if="message.type == MESSAGE_TYPE.IMAGE" style="width: 85px; border-radius: 8px"
+                                  :src="message.file.src" :ratio="1" />
+
+                                <video v-if="message.type == MESSAGE_TYPE.VIDEO" style="position: absolute;
                                           z-index: -1;
                                           top: 0;
                                           left: 0;
                                           width: 100%; 
                                           height: 100%;
                                           object-fit: cover;
-                                          border-radius: 8px"
-                                  :src="message.file.src"
-                                />
+                                          border-radius: 8px" :src="message.file.src" />
 
-                                <div
-                                  style="
+                                <div style="
                                     position: absolute;
                                     display: flex;
                                     align-items: end;
                                     justify-content: center;
-                                  "
-                                  class="full-width full-height q-mb-sm"
-                                  v-if="message.type == MESSAGE_TYPE.VIDEO"
-                                >
-                                  <q-chip
-                                    square
-                                    dense
-                                    size="md"
-                                    color="black"
-                                    text-color="white"
-                                    icon="videocam"
-                                  >
+                                  " class="full-width full-height q-mb-sm" v-if="message.type == MESSAGE_TYPE.VIDEO">
+                                  <q-chip square dense size="md" color="black" text-color="white" icon="videocam">
                                     {{ secToMinSec(message.file.duration) }}
                                   </q-chip>
                                 </div>
@@ -755,30 +620,15 @@ const style = computed(() => ({
                           `Members (${Object.keys(currentRoom.users).length})`
                         }}
                       </div>
-                      <q-input
-                        outlined
-                        color="teal-6"
-                        placeholder="Search"
-                        class="q-mb-sm q-mt-md q-mx-lg smaller-input"
-                        dense
-                        v-model="searchUserDisplayname"
-                        autofocus
-                      >
+                      <q-input outlined color="teal-6" placeholder="Search" class="q-mb-sm q-mt-md q-mx-lg smaller-input"
+                        dense v-model="searchUserDisplayname" autofocus>
                       </q-input>
                       <q-scroll-area class="q-mx-sm" style="height: 300px">
                         <template v-for="user in currentRoom.users">
-                          <q-item
-                            clickable
-                            v-ripple
-                            class="q-pl-md new-chat-item"
-                            v-if="
-                              store.users[user.id].displayname.includes(
-                                searchUserDisplayname
-                              )
-                            "
-                            @click="startChat(user.id)"
-                            v-close-popup
-                          >
+                          <q-item clickable v-ripple class="q-pl-md new-chat-item" v-if="store.users[user.id].displayname.includes(
+                            searchUserDisplayname
+                          )
+                            " @click="startChat(user.id)" v-close-popup>
                             <q-item-section avatar>
                               <q-avatar>
                                 <img :src="store.users[user.id].avatar" />
@@ -787,21 +637,16 @@ const style = computed(() => ({
 
                             <q-item-section>
                               <span>{{
-                                `${store.users[user.id].displayname} ${
-                                  user.id == store.loginUser.id ? "(You)" : ""
-                                }`
+                                `${store.users[user.id].displayname} ${user.id == store.loginUser.id ? "(You)" : ""
+                                  }`
                               }}</span>
-                              <span
-                                v-if="
-                                  currentRoom.users[user.id].role >
+                              <span v-if="currentRoom.users[user.id].role >
                                   USER_TYPE.USER
-                                "
-                                >{{
-                                  USER_TYPE2TEXT[
-                                    currentRoom.users[user.id].role
-                                  ]
-                                }}</span
-                              >
+                                  ">{{
+      USER_TYPE2TEXT[
+        currentRoom.users[user.id].role
+      ]
+    }}</span>
                             </q-item-section>
                           </q-item>
                         </template>
@@ -830,15 +675,8 @@ const style = computed(() => ({
         </q-toolbar>
       </q-header>
 
-      <q-drawer
-        ref="ldrawer"
-        v-model="leftDrawerOpen"
-        width=420
-        show-if-above
-        bordered
-        class="full-width"
-        :breakpoint="690"
-      >
+      <q-drawer ref="ldrawer" v-model="leftDrawerOpen" width=420 show-if-above bordered class="full-width"
+        :breakpoint="690">
         <q-toolbar class="bg-white">
 
           <!-- <q-btn round flat icon="mdi-message-plus-outline">
@@ -851,17 +689,11 @@ const style = computed(() => ({
               </q-card-section>
 
               <q-card-section class="q-pt-none">
-                <q-input
-                  color="teal-6"
-                  placeholder="Enter username"
-                  dense
-                  v-model="searchUserName"
-                  autofocus
+                <q-input color="teal-6" placeholder="Enter username" dense v-model="searchUserName" autofocus
                   @keyup.enter="
                     isAddFriendDialog = false;
-                    addFriend();
-                  "
-                />
+                  addFriend();
+                  " />
               </q-card-section>
 
               <q-card-actions align="right" class="text-teal-6">
@@ -870,26 +702,14 @@ const style = computed(() => ({
               </q-card-actions>
             </q-card>
           </q-dialog>
-          
-          <q-btn
-            round
-            flat
-            icon="close"
-            class="WAL__drawer-close"
-            @click="toggleLeftDrawer"
-          />
-          <q-btn 
-            round
-            flat
-            class="q-mx-sm"
-            icon="mdi-menu"
-          >
+
+          <q-btn round flat icon="close" class="WAL__drawer-close" @click="toggleLeftDrawer" />
+          <q-btn round flat class="q-mx-sm" icon="mdi-menu">
             <q-menu auto-close>
               <q-list style="min-width: 150px">
                 <q-item clickable>
                   <q-item-section @click="isAddFriendDialog = true">
-                  Add Friend</q-item-section
-                  >
+                    Add Friend</q-item-section>
                 </q-item>
                 <q-item clickable>
                   <q-item-section>Profile</q-item-section>
@@ -903,8 +723,9 @@ const style = computed(() => ({
               </q-list>
             </q-menu>
           </q-btn>
-          
-          <q-input rounded outlined dense class="WAL__field full-width" bg-color="white" v-model="searchRoomName" placeholder="Search">
+
+          <q-input rounded outlined dense class="WAL__field full-width" bg-color="white" v-model="searchRoomName"
+            placeholder="Search">
             <template v-slot:prepend>
               <q-icon name="search" />
             </template>
@@ -913,70 +734,36 @@ const style = computed(() => ({
 
         <div class="bg-white" style="height:92%">
           <q-scroll-area style="height:100%" class="q-pl-sm q-pr-md">
-           
+
             <q-list>
               <template v-for="roomId of store.sortedRoomsId" :key="roomId">
                 {{ (room = store.rooms[roomId], null) }}
-                  <Room 
-                    v-if="room.name.includes(searchRoomName)"
-                    :room="room" 
-                    :active="currentRoomId == roomId"
-                    :login-user-id="store.loginUser.id"
-                    :users="store.users"
-                    @click="setCurrentRoomId(roomId)"
-                  >
-                  </Room>
+                <Room v-if="room.name.includes(searchRoomName)" :room="room" :active="currentRoomId == roomId"
+                  :login-user-id="store.loginUser.id" :users="store.users" @click="setCurrentRoomId(roomId)">
+                </Room>
 
               </template>
             </q-list>
           </q-scroll-area>
-          <div
-            style="position:absolute;bottom:32px;right:32px"
-          >
+          <div style="position:absolute;bottom:32px;right:32px">
             <q-btn fab icon="add" color="teal-5">
-              <q-menu
-                style="min-width: 300px"
-                @before-show="
-                  showNewGroupSelect = false;
-                  resetNewRoom();
-                "
-                @hide="resetNewRoom()"
-              >
+              <q-menu style="min-width: 300px" @before-show="
+                showNewGroupSelect = false;
+              resetNewRoom();
+              " @hide="resetNewRoom()">
                 <div v-if="!showNewGroupSelect" class="bg-grey-3 q-px-sm q-py-md">
                   <div>
                     <div class="text-h6 q-mb-sm q-px-md">New Chat</div>
-                    <q-input
-                      color="teal-6"
-                      bg-color="white"
-                      placeholder="Search"
-                      class="q-mb-md q-pl-md q-pr-sm smaller-input"
-                      dense
-                      filled
-                      v-model="searchUserDisplayname"
-                      autofocus
-                    >
+                    <q-input color="teal-6" bg-color="white" placeholder="Search"
+                      class="q-mb-md q-pl-md q-pr-sm smaller-input" dense filled v-model="searchUserDisplayname"
+                      autofocus>
                       <template v-slot:after>
-                        <q-btn
-                          class="q-mb-sm"
-                          size="md"
-                          dense
-                          flat
-                          icon="search"
-                        />
+                        <q-btn class="q-mb-sm" size="md" dense flat icon="search" />
                       </template>
                     </q-input>
-                    <q-item
-                      clickable
-                      v-ripple
-                      class="new-chat-item q-mb-sm"
-                      @click="showNewGroupSelect = true"
-                    >
+                    <q-item clickable v-ripple class="new-chat-item q-mb-sm" @click="showNewGroupSelect = true">
                       <q-item-section avatar>
-                        <q-avatar
-                          color="teal"
-                          text-color="white"
-                          icon="mdi-account-group-outline"
-                        />
+                        <q-avatar color="teal" text-color="white" icon="mdi-account-group-outline" />
                       </q-item-section>
                       <q-item-section>New Group</q-item-section>
                     </q-item>
@@ -987,18 +774,10 @@ const style = computed(() => ({
                   <div>
                     <q-scroll-area style="height: 300px">
                       <template v-for="user in store.loginUser.friends">
-                        <q-item
-                          clickable
-                          v-ripple
-                          class="new-chat-item q-mb-sm"
-                          v-if="
-                            store.users[user.id].displayname.includes(
-                              searchUserDisplayname
-                            )
-                          "
-                          @click="startChat(user.id)"
-                          v-close-popup
-                        >
+                        <q-item clickable v-ripple class="new-chat-item q-mb-sm" v-if="store.users[user.id].displayname.includes(
+                          searchUserDisplayname
+                        )
+                          " @click="startChat(user.id)" v-close-popup>
                           <q-item-section avatar>
                             <q-avatar>
                               <img :src="store.users[user.id].avatar" />
@@ -1006,9 +785,8 @@ const style = computed(() => ({
                           </q-item-section>
 
                           <q-item-section>{{
-                            `${store.users[user.id].displayname} ${
-                              user.id == store.loginUser.id ? "(You)" : ""
-                            }`
+                            `${store.users[user.id].displayname} ${user.id == store.loginUser.id ? "(You)" : ""
+                              }`
                           }}</q-item-section>
                         </q-item>
                       </template>
@@ -1016,25 +794,14 @@ const style = computed(() => ({
                   </div>
                 </div>
                 <div v-if="showNewGroupSelect">
-                  <div
-                    :class="{
-                      'bg-white q-pt-md q-pb-sm ': true,
-                      'bg-grey-2': groupSelectedUsersId.length > 0,
-                    }"
-                  >
+                  <div :class="{
+                    'bg-white q-pt-md q-pb-sm ': true,
+                    'bg-grey-2': groupSelectedUsersId.length > 0,
+                  }">
                     <div class="q-mx-md" style="display: flex">
-                      <q-btn
-                        dense
-                        flat
-                        icon="mdi-arrow-left"
-                        size="md"
-                        padding="sm"
-                        @click="showNewGroupSelect = false"
-                      />
-                      <div
-                        style="display: flex; align-items: center"
-                        class="q-px-sm text-h6"
-                      >
+                      <q-btn dense flat icon="mdi-arrow-left" size="md" padding="sm"
+                        @click="showNewGroupSelect = false" />
+                      <div style="display: flex; align-items: center" class="q-px-sm text-h6">
                         New Group
                       </div>
                     </div>
@@ -1042,83 +809,39 @@ const style = computed(() => ({
                       <div class="q-mx-md q-mb-sm q-mt-sm" style="display: flex">
                         <q-btn round flat @click="qFileAvatarNewRoom.$el.click()">
                           <q-avatar class="q-pa-none profilepic">
-                            <img
-                              class="profilepic__image"
-                              :src="avatarNewRoom"
-                            />
-                            <q-icon
-                              class="profilepic__content"
-                              size="20px"
-                              color="white"
-                              name="mdi-pencil-outline"
-                            ></q-icon>
+                            <img class="profilepic__image" :src="avatarNewRoom" />
+                            <q-icon class="profilepic__content" size="20px" color="white"
+                              name="mdi-pencil-outline"></q-icon>
                           </q-avatar>
                         </q-btn>
-                        <q-file
-                          ref="qFileAvatarNewRoom"
-                          style="display: none"
-                          v-model="inputFileAvatarNewRoom"
-                          accept=".jpg, .png"
-                          @update:model-value="handleUploadAvatarNewRoom()"
-                        ></q-file>
-                        <div
-                          style="display: flex; align-items: center"
-                          class="q-ml-md"
-                        >
-                          <q-input
-                            outlined
-                            color="teal-6"
-                            bg-color="white"
-                            placeholder="Group Name"
-                            class="smaller-input"
-                            dense
-                            filled
-                            v-model="nameNewRoom"
-                          >
+                        <q-file ref="qFileAvatarNewRoom" style="display: none" v-model="inputFileAvatarNewRoom"
+                          accept=".jpg, .png" @update:model-value="handleUploadAvatarNewRoom()"></q-file>
+                        <div style="display: flex; align-items: center" class="q-ml-md">
+                          <q-input outlined color="teal-6" bg-color="white" placeholder="Group Name" class="smaller-input"
+                            dense filled v-model="nameNewRoom">
                           </q-input>
                         </div>
                       </div>
                       <div class="truncate-chip-labels q-mb-md q-mx-md">
                         <template v-for="(userId, index) in groupSelectedUsersId">
-                          <q-chip
-                            removable
-                            square
-                            color="teal"
-                            text-color="white"
-                            @remove="
-                              groupSelectedUsersId.value =
-                                groupSelectedUsersId.splice(index, 1)
-                            "
-                            :label="store.users[userId].displayname"
-                          >
+                          <q-chip removable square color="teal" text-color="white" @remove="
+                            groupSelectedUsersId.value =
+                            groupSelectedUsersId.splice(index, 1)
+                            " :label="store.users[userId].displayname">
                             <q-tooltip>{{
                               store.users[userId].displayname
                             }}</q-tooltip>
                           </q-chip>
                         </template>
                       </div>
-                      <div
-                        style="display: flex; justify-content: flex-end"
-                        class="q-px-sm"
-                      >
-                        <q-btn
-                          class="full-width bg-white shadow-1"
-                          dense
-                          no-caps
-                          unelevated
-                          @click="groupSelectedUsersId = []"
-                        >
+                      <div style="display: flex; justify-content: flex-end" class="q-px-sm">
+                        <q-btn class="full-width bg-white shadow-1" dense no-caps unelevated
+                          @click="groupSelectedUsersId = []">
                           Cancel
                         </q-btn>
                         <span class="q-mx-xs"></span>
-                        <q-btn
-                          class="bg-teal-6 text-white full-width shadow-1"
-                          dense
-                          no-caps
-                          unelevated
-                          v-close-popup
-                          @click="createGroup()"
-                        >
+                        <q-btn class="bg-teal-6 text-white full-width shadow-1" dense no-caps unelevated v-close-popup
+                          @click="createGroup()">
                           Create
                         </q-btn>
                       </div>
@@ -1126,17 +849,9 @@ const style = computed(() => ({
                   </div>
 
                   <div class="bg-white q-px-sm q-pb-md">
-                    <q-input
-                      outlined
-                      color="teal-6"
-                      bg-color="grey-3"
-                      placeholder="Search"
-                      class="q-mb-sm q-pl-md q-pr-md q-mt-md smaller-input"
-                      dense
-                      filled
-                      v-model="searchUserDisplayname"
-                      autofocus
-                    >
+                    <q-input outlined color="teal-6" bg-color="grey-3" placeholder="Search"
+                      class="q-mb-sm q-pl-md q-pr-md q-mt-md smaller-input" dense filled v-model="searchUserDisplayname"
+                      autofocus>
                     </q-input>
                     <div class="text-subtitle2 text-weight-light q-mb-sm q-px-md">
                       All friends
@@ -1145,16 +860,10 @@ const style = computed(() => ({
                     <div>
                       <q-scroll-area style="height: 300px">
                         <template v-for="user in store.loginUser.friends">
-                          <q-item
-                            clickable
-                            v-ripple
-                            class="new-chat-item q-mb-sm"
-                            v-if="
-                              store.users[user.id].displayname.includes(
-                                searchUserDisplayname
-                              ) && user.id != store.loginUser.id
-                            "
-                          >
+                          <q-item clickable v-ripple class="new-chat-item q-mb-sm" v-if="store.users[user.id].displayname.includes(
+                            searchUserDisplayname
+                          ) && user.id != store.loginUser.id
+                            ">
                             <q-item-section avatar>
                               <q-avatar>
                                 <img :src="store.users[user.id].avatar" />
@@ -1162,16 +871,11 @@ const style = computed(() => ({
                             </q-item-section>
 
                             <q-item-section>{{
-                              `${store.users[user.id].displayname} ${
-                                user.id == store.loginUser.id ? "(You)" : ""
-                              }`
+                              `${store.users[user.id].displayname} ${user.id == store.loginUser.id ? "(You)" : ""
+                                }`
                             }}</q-item-section>
                             <q-item-section avatar>
-                              <q-checkbox
-                                v-model="groupSelectedUsersId"
-                                color="teal-6"
-                                :val="user.id"
-                              />
+                              <q-checkbox v-model="groupSelectedUsersId" color="teal-6" :val="user.id" />
                             </q-item-section>
                           </q-item>
                         </template>
@@ -1187,78 +891,43 @@ const style = computed(() => ({
       </q-drawer>
       <q-page-container class="bg-grey-2" style="z-index: 2">
         <q-page style="height: 1px">
-          <q-scroll-area
-            class="page-chat fit justify-center"
-            v-if="currentRoom != null"
-            ref="scrollArea"
-          >
+          <q-scroll-area class="page-chat fit justify-center" v-if="currentRoom != null" ref="scrollArea">
             <div style="visibility: hidden">test</div>
-            <!-- <InfiniteLoading @infinite="load" /> -->
-            <chat-window
-              :messages="currentRoom.messages"
-              :read-idx="currentRoom.users[store.loginUser.id].readIdx"
-              :login-user-id="store.loginUser.id"
-              @reply="(message) => setReplyMsg(message)"
+            <chat-window :messages="currentRoom.messages" :read-idx="currentRoom.users[store.loginUser.id].readIdx" :users="store.users"
+              :login-user-id="store.loginUser.id" @reply="(message) => setReplyMsg(message)"
               @send-emote="(emote, messageId) => setEmote(messageId, emote)"
-              @remove-emote="(emote, messageId) => removeEmote(messageId, emote)"
-            />
+              @remove-emote="(emote, messageId) => removeEmote(messageId, emote)" />
           </q-scroll-area>
-          <q-page-sticky
-            v-if="showScrollSticky"
-            position="bottom"
-            :offset="[0, 18]"
-          >
-            <q-btn
-              round
-              color="teal-6"
-              icon="arrow_forward"
-              class="rotate-90"
-              @click="scrollToBottom()"
-            />
+          <q-page-sticky v-if="showScrollSticky" position="bottom" :offset="[0, 18]">
+            <q-btn round color="teal-6" icon="arrow_forward" class="rotate-90" @click="scrollToBottom()" />
           </q-page-sticky>
         </q-page>
       </q-page-container>
 
       <q-footer class="bg-white">
         <q-toolbar v-if="replyMsg != null">
-          <q-btn
-            style="visibility: hidden"
-            flat
-            icon="mdi-emoticon-outline"
-          ></q-btn>
-          <q-btn
-            style="visibility: hidden"
-            flat
-            icon="mdi-emoticon-outline"
-          ></q-btn>
-          <div
-            class="cursor-pointer full-width bg-grey-3 text-black q-mt-sm q-mr-sm reply-box"
-            v-if="replyMsg != null"
-            style="display: flex; justify-items: center"
-          >
+          <q-btn style="visibility: hidden" flat icon="mdi-emoticon-outline"></q-btn>
+          <q-btn style="visibility: hidden" flat icon="mdi-emoticon-outline"></q-btn>
+          <div class="cursor-pointer full-width bg-grey-3 text-black q-mt-sm q-mr-sm reply-box" v-if="replyMsg != null"
+            style="display: flex; justify-items: center">
             <div class="q-my-xs q-ml-md">
               <q-icon name="mdi-reply" />
               Replying to
               <span class="text-bold">{{
                 replyMsg.from == store.loginUser.id
-                  ? "Yourself"
-                  : store.users[replyMsg.from].displayname
+                ? "Yourself"
+                : store.users[replyMsg.from].displayname
               }}</span>
               <div>
                 {{
                   replyMsg.type == MESSAGE_TYPE.TEXT
-                    ? replyMsg.content
-                    : MESSAGE_TYPE2TEXT[replyMsg.type]
+                  ? replyMsg.content
+                  : MESSAGE_TYPE2TEXT[replyMsg.type]
                 }}
               </div>
             </div>
             <q-space />
-            <q-btn
-              flat
-              style="border-radius: 8px"
-              icon="mdi-window-close"
-              @click="replyMsg = null"
-            ></q-btn>
+            <q-btn flat style="border-radius: 8px" icon="mdi-window-close" @click="replyMsg = null"></q-btn>
           </div>
 
           <!-- <img src="https://img.vn/uploads/thuvien/singa-png-20220719150401Tdj1WAJFQr.png"/> -->
@@ -1271,52 +940,28 @@ const style = computed(() => ({
               </div>
             </q-menu>
           </q-btn>
-          <q-file
-            ref="qFileInput"
-            style="display: none"
-            v-model="inputFiles"
-            append
-            multiple
-          ></q-file>
+          <q-file ref="qFileInput" style="display: none" v-model="inputFiles" append multiple></q-file>
           <q-btn flat icon="mdi-paperclip" class="q-mr-sm">
-            <q-menu
-              @before-show="
-                inputFiles = [];
-                selectedInputFile = null;
-              "
-            >
-              <div
-                style="
+            <q-menu @before-show="
+              inputFiles = [];
+            selectedInputFile = null;
+            ">
+              <div style="
                   min-height: 360px;
                   display: flex;
                   justify-content: center;
                   align-items: center;
-                "
-              >
-                <img
-                  style="max-height: 350px"
-                  v-if="
-                    selectedInputFile != null &&
-                    selectedInputFile.type.startsWith('image')
-                  "
-                  :src="getURLFromFile(selectedInputFile)"
-                />
-                <video
-                  style="max-height: 350px"
-                  v-if="
-                    selectedInputFile != null &&
-                    selectedInputFile.type.startsWith('video')
-                  "
-                  :src="getURLFromFile(selectedInputFile)"
-                  controls
-                ></video>
-                <div
-                  v-if="
-                    selectedInputFile != null &&
-                    !selectedInputFile.type.startsWith('video') &&
-                    !selectedInputFile.type.startsWith('image')
-                  "
-                >
+                ">
+                <img style="max-height: 350px" v-if="selectedInputFile != null &&
+                  selectedInputFile.type.startsWith('image')
+                  " :src="getURLFromFile(selectedInputFile)" />
+                <video style="max-width: 500px" v-if="selectedInputFile != null &&
+                  selectedInputFile.type.startsWith('video')
+                  " :src="getURLFromFile(selectedInputFile)" controls></video>
+                <div v-if="selectedInputFile != null &&
+                  !selectedInputFile.type.startsWith('video') &&
+                  !selectedInputFile.type.startsWith('image')
+                  ">
                   <div class="flex flex-center q-mb-sm">
                     <q-icon size="xl" name="mdi-file-outline"></q-icon>
                   </div>
@@ -1326,84 +971,50 @@ const style = computed(() => ({
                   </div>
                   <div class="flex flex-center">
                     <span>{{
-                      `${convertFileSize(selectedInputFile.size)}, ${
-                        selectedInputFile.type
-                      }`
+                      `${convertFileSize(selectedInputFile.size)}, ${selectedInputFile.type
+                        }`
                     }}</span>
                   </div>
                 </div>
               </div>
               <div style="display: flex" class="bg-grey-3">
                 <div style="padding-top: 12px; padding-bottom: 3px">
-                  <q-scroll-area
-                    style="width: 400px"
-                    class="flex full-height"
-                    :thumb-style="{ height: '6px' }"
-                  >
+                  <q-scroll-area style="width: 400px" class="flex full-height" :thumb-style="{ height: '6px' }">
                     <div style="display: flex">
                       <template v-for="(file, index) of inputFiles">
-                        <q-btn
-                          dense
-                          class="q-mx-xs q-pa-none"
-                          :style="`border-radius: 0.6;${
-                            selectedInputFile == null
-                              ? 'opacity: 0.5'
-                              : file.__key != selectedInputFile.__key
-                              ? 'opacity: 0.5;'
-                              : ''
-                          }`"
-                          unelevated
-                          @click="selectedInputFile = file"
-                        >
-                          <img
-                            v-if="file.type.startsWith('image')"
-                            style="
+                        <q-btn dense class="q-mx-xs q-pa-none" :style="`border-radius: 0.6;${selectedInputFile == null
+                          ? 'opacity: 0.5'
+                          : file.__key != selectedInputFile.__key
+                            ? 'opacity: 0.5;'
+                            : ''
+                          }`" unelevated @click="selectedInputFile = file">
+                          <img v-if="file.type.startsWith('image')" style="
                               height: 44px;
                               width: 44px;
                               border-radius: 6px;
-                            "
-                            :src="getURLFromFile(file)"
-                          />
-                          <video
-                            style="
+                            " :src="getURLFromFile(file)" />
+                          <video style="
                               height: 44px;
                               width: 44px;
                               border-radius: 6px;
-                            "
-                            v-if="file.type.startsWith('video')"
-                            :src="getURLFromFile(file)"
-                          ></video>
-                          <q-icon
-                            style="
+                            " v-if="file.type.startsWith('video')" :src="getURLFromFile(file)"></video>
+                          <q-icon style="
                               height: 44px;
                               width: 44px;
                               border-radius: 6px;
-                            "
-                            v-if="
-                              !file.type.startsWith('video') &&
+                            " v-if="!file.type.startsWith('video') &&
                               !file.type.startsWith('image')
-                            "
-                            name="mdi-file-outline"
-                          ></q-icon>
+                              " name="mdi-file-outline"></q-icon>
                         </q-btn>
                       </template>
                     </div>
                   </q-scroll-area>
                 </div>
                 <div style="padding: 12px">
-                  <q-btn
-                    style="height: 44px; width: 44px"
-                    icon="mdi-plus"
-                    @click="getFile"
-                  >
+                  <q-btn style="height: 44px; width: 44px" icon="mdi-plus" @click="getFile">
                   </q-btn>
-                  <q-btn
-                    class="q-ml-sm"
-                    style="height: 44px; width: 44px"
-                    color="teal-6"
-                    v-close-popup
-                    @click="submitMessage()"
-                  >
+                  <q-btn class="q-ml-sm" style="height: 44px; width: 44px" color="teal-6" v-close-popup
+                    @click="submitMessage()">
                     <q-icon size="16px" name="mdi-send-outline"> </q-icon>
                   </q-btn>
                 </div>
@@ -1411,17 +1022,25 @@ const style = computed(() => ({
             </q-menu>
           </q-btn>
 
-          <q-input
-            rounded
-            borderless
-            dense
-            bg-color="grey-1"
-            class="WAL__fieldMsg full-width"
-            v-model="inputMessageText"
-            placeholder="Type a message"
-            @keydown.enter="submitMessage"
-          />
+          <q-input rounded borderless dense bg-color="grey-1" class="WAL__fieldMsg full-width" v-model="inputMessageText"
+            placeholder="Type a message" @keydown.enter="submitMessage">
+            <q-menu no-focus self="top start" anchor="bottom start" style="top: unset; bottom: 50px">
+              <q-list>
+                <template v-for="user in currentRoom.users">
+                  <q-item v-if="store.users[user.id].displayname.includes(tag)" clickable v-ripple>
+                    <q-item-section avatar>
+                      <q-avatar>
+                        <img :src="store.users[user.id].avatar" />
+                      </q-avatar>
+                    </q-item-section>
 
+                    <q-item-section>{{ store.users[user.id].displayname }}</q-item-section>
+                  </q-item>
+                </template>
+
+              </q-list>
+            </q-menu>
+          </q-input>
           <q-btn round flat icon="mic" />
         </q-toolbar>
       </q-footer>

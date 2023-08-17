@@ -293,7 +293,7 @@ async function createGroupRoom(
     to: roomId,
     createon: Date.now(),
     type: MESSAGE_TYPE.EVENT,
-    content: "User created",
+    content: "Group created",
     reply: null,
   };
   const room = {
@@ -357,8 +357,7 @@ app.get("/messages", authMdWare.isAuth, async (req, res) => {
 });
 app.get("/video/thumbnail", authMdWare.isAuth, (req, res) => {
   res.download(
-    `./uploads/${req.query.roomId}/${req.query.fileId}/${
-      path.parse(req.query.fileName).name
+    `./uploads/${req.query.roomId}/${req.query.fileId}/${path.parse(req.query.fileName).name
     }-thumbnail-320x180-0001.png`
   );
 });
@@ -754,16 +753,16 @@ io.on("connection", async (socket) => {
       );
       room.messages[messageId].emotes = {}
     }
-    if (room.messages[messageId].emotes[[userId,emote]] == undefined) {
+    if (room.messages[messageId].emotes[[userId, emote]] == undefined) {
       await Rooms.updateOne(
         { id: roomId },
         {
-          $set: { [`messages.${messageId}.emotes.${[userId,emote]}`]: [userId,emote] },
+          $set: { [`messages.${messageId}.emotes.${[userId, emote]}`]: [userId, emote] },
         }
       );
       await io.in(roomId).emit("setEmote", roomId, messageId, userId, emote);
     }
-    
+
   });
 
   socket.on("removeEmote", async (roomId, messageId, emote) => {
@@ -777,7 +776,7 @@ io.on("connection", async (socket) => {
       }
     );
     await io.in(roomId).emit("removeEmote", roomId, messageId, emote);
-    
+
   });
 
   socket.on("setRead", async (roomId, userId, idx) => {

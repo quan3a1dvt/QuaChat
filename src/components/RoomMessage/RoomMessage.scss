@@ -42,15 +42,19 @@
   }
 
   .vtc-emoji-wrapper {
+    width: fit-content;
     background-color: white;
     border-radius: 25px;
     margin-bottom: 10px;
-    padding-left:3px;
+    padding-left: 10px;
+    padding-right: 5px;
+    padding-top: 3px;
     display: flex;
     box-shadow: rgba(0, 0, 0, 0.15) 0px 0px 10px;
   }
   .vtc-emoji-template {
     // font-size: 28px;
+    margin-right: 7px;
     transition: transform .2s;
   }
   .vtc-emoji-template:hover{
