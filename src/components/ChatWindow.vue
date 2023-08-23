@@ -13,14 +13,14 @@
         
         <div
           :style="
-            message.from == loginUserId
+            message.from == loginUser.id
               ? 'display:flex;justify-content: end'
               : ''
           "
           v-if="message.type != MESSAGE_TYPE.EVENT"
         >
           <room-message 
-            :login-user-id="this.loginUserId"
+            :login-user="this.loginUser"
             :message="message"
             :user="users[message.from]"
             :id=message.id
@@ -43,7 +43,7 @@ export default {
 	},
 
   props: {
-    loginUserId: { type:String, required: true },
+    loginUser: { type: Object, required: true },
     messages: { type: Object, required: true },
     readIdx: { type: Number, required: true },
     users: { type: Object, required: true }

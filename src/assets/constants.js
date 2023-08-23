@@ -33,3 +33,15 @@ export const MESSAGE_TYPE2TEXT = {
   4: "Image",
   5: "Document",
 };
+
+export const getURLFromFile = ((file) => {
+  return window.URL.createObjectURL(file);
+})
+
+export const getFileFromUrl = (async (url, name, defaultType = 'image/jpeg') => {
+  const response = await fetch(url);
+  const data = await response.blob();
+  return new File([data], name, {
+    type: data.type || defaultType,
+  })
+})

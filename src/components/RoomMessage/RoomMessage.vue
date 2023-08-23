@@ -1,5 +1,5 @@
 <template>
-  {{ ((sent = message.from == loginUserId), null) }}
+  {{ ((sent = message.from == loginUser.id), null) }}
   <div class="vtc-message-wrapper">
     <!-- <div class="vtc-card-info vtc-card-date">
 			{{ message.createon }}
@@ -46,7 +46,7 @@
 
             <div class="bg-grey-4 q-mb-sm q-px-sm q-py-xs reply-box" v-if="message.replyMsg != null">
               <span class="text-bold text-green-6">{{
-                message.replyMsg.from == loginUserId ? "You" : user.displayname
+                message.replyMsg.from == loginUser.id ? "You" : user.displayname
               }}</span>
               <div v-if="message.replyMsg.type == this.MESSAGE_TYPE.TEXT">
                 {{ message.replyMsg.content }}
@@ -113,10 +113,10 @@
           <template v-for="emote in emotes">
             <q-btn flat dense unelevated padding="0px" @click="
                                                                             {
-              if (emoteSender = message.emotes[[loginUserId, emote.emote]] != undefined) {
+              if (emoteSender = message.emotes[[loginUser.id, emote.emote]] != undefined) {
                 this.$emit(
                   'remove-emote',
-                  [loginUserId, emote.emote],
+                  [loginUser.id, emote.emote],
                   message.id
                 )
               } else {
@@ -125,7 +125,7 @@
             }
               ">
               <div class="bg-teal-1 q-pr-xs q-pl-xs" style="border-radius: 3px" :class="{
-                'bg-teal-3': emoteSender = message.emotes[[loginUserId, emote.emote]] != undefined,
+                'bg-teal-3': emoteSender = message.emotes[[loginUser.id, emote.emote]] != undefined,
                 'q-mr-xs': !sent,
                 'q-ml-xs': sent,
               }">
@@ -146,7 +146,7 @@ import Cookies from "js-cookie";
 import axios from "axios";
 export default {
   props: {
-    loginUserId: { type: String, required: true },
+    loginUser: { type: Object, required: true },
     user: { type: Object, required: true },
     message: { type: Object, required: true },
   },

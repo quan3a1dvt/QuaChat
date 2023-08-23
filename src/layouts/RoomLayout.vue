@@ -31,17 +31,15 @@ import { v4 as uuidv4 } from "uuid";
 import socketioService from "../services/socketio.service.js";
 import { QMediaPlayer } from "@quasar/quasar-app-extension-qmediaplayer";
 
-import Room from "../components/Room/Room.vue"
+
+import RoomContent from "../components/RoomList/RoomContent/RoomContent.vue"
+import RoomAdd from "../components/RoomList/RoomAdd/RoomAdd.vue"
 import ChatWindow from "../components/ChatWindow.vue"
+import QInputStyle from "../components/QInputStyle/QInputStyle.vue"
 const router = useRouter();
 let socketConnected = false;
 
 let messagesEl = ref({});
-
-const addMessageRef = (el, msgId) => {
-  messagesEl.value[msgId] = el;
-};
-
 
 async function generateId() {
   return uuidv4();
@@ -52,24 +50,6 @@ function getFullDateTimeFromStamp(stamp) {
   return dateFormat(target, "dd/m/yyyy h:MM TT");
 }
 
-function getShortTimeFormat(stamp) {
-  let target = new Date(stamp);
-  let now = new Date();
-  let nowDayIdx = now.getDate();
-  let targetDayIdx = target.getDate();
-  if (nowDayIdx - targetDayIdx == 0) {
-    return dateFormat(target, "HH:MM");
-  } else if (0 < nowDayIdx - targetDayIdx && nowDayIdx - targetDayIdx < 7) {
-    return dateFormat(target, "ddd");
-  } else {
-    return dateFormat(target, "mmm d");
-  }
-}
-
-function getTimeFromStamp(stamp) {
-  let target = new Date(stamp);
-  return dateFormat(target, "h:MM TT");
-}
 
 function secToMinSec(time) {
   time = Math.floor(time);
@@ -121,7 +101,6 @@ const currentRoom = computed(() => {
 });
 
 function setCurrentRoomId(id) {
-  console.log(id)
   messagesEl.value = [];
   store.currentRoom = null;
   store.currentRoomId = id;
@@ -149,35 +128,8 @@ function startChat(userId) {
   SocketioService.startChat(userId);
 }
 
-const showNewGroupSelect = ref(false);
-const qFileAvatarNewRoom = ref(null);
-const inputFileAvatarNewRoom = ref(null);
-const avatarNewRoom = ref("http://localhost:3000/assets?fileName=Blank-Avatar.png")
-const nameNewRoom = ref("")
-const groupSelectedUsersId = ref([]);
-
-function handleUploadAvatarNewRoom() {
-  if (inputFileAvatarNewRoom.value != null) {
-    avatarNewRoom.value = getURLFromFile(inputFileAvatarNewRoom.value);
-  }
-}
-
-async function resetNewRoom() {
-  groupSelectedUsersId.value = []
-  inputFileAvatarNewRoom.value = null;
-  avatarNewRoom.value = "http://localhost:3000/assets?fileName=Blank-Avatar.png"
-  nameNewRoom.value = ""
-}
-
-async function createGroup() {
-  if (inputFileAvatarNewRoom.value == null) {
-    inputFileAvatarNewRoom.value = await getFileFromUrl(`http://localhost:3000/assets?fileName=Blank-Avatar.png`, 'Blank-Avatar.png');
-  }
-  let usersId = [store.loginUser.id]
-  for (let userId of groupSelectedUsersId.value) {
-    usersId.push(userId)
-  }
-  SocketioService.createGroup(usersId, inputFileAvatarNewRoom.value, nameNewRoom.value)
+async function createGroup(usersId, inputFileAvatarNewRoom, nameNewRoom) {
+  SocketioService.createGroup(usersId, inputFileAvatarNewRoom, nameNewRoom)
 }
 
 function logout() {
@@ -642,11 +594,7 @@ const style = computed(() => ({
                               }}</span>
                               <span v-if="currentRoom.users[user.id].role >
                                   USER_TYPE.USER
-                                  ">{{
-      USER_TYPE2TEXT[
-        currentRoom.users[user.id].role
-      ]
-    }}</span>
+                                  ">{{ USER_TYPE2TEXT[currentRoom.users[user.id].role] }}</span>
                             </q-item-section>
                           </q-item>
                         </template>
@@ -738,154 +686,17 @@ const style = computed(() => ({
             <q-list>
               <template v-for="roomId of store.sortedRoomsId" :key="roomId">
                 {{ (room = store.rooms[roomId], null) }}
-                <Room v-if="room.name.includes(searchRoomName)" :room="room" :active="currentRoomId == roomId"
-                  :login-user-id="store.loginUser.id" :users="store.users" @click="setCurrentRoomId(roomId)">
-                </Room>
-
+                <room-content v-if="room.name.includes(searchRoomName)" :room="room" :active="currentRoomId == roomId"
+                  :login-user="store.loginUser" :users="store.users" @click="setCurrentRoomId(roomId)">
+                </room-content>
               </template>
             </q-list>
           </q-scroll-area>
-          <div style="position:absolute;bottom:32px;right:32px">
-            <q-btn fab icon="add" color="teal-5">
-              <q-menu style="min-width: 300px" @before-show="
-                showNewGroupSelect = false;
-              resetNewRoom();
-              " @hide="resetNewRoom()">
-                <div v-if="!showNewGroupSelect" class="bg-grey-3 q-px-sm q-py-md">
-                  <div>
-                    <div class="text-h6 q-mb-sm q-px-md">New Chat</div>
-                    <q-input color="teal-6" bg-color="white" placeholder="Search"
-                      class="q-mb-md q-pl-md q-pr-sm smaller-input" dense filled v-model="searchUserDisplayname"
-                      autofocus>
-                      <template v-slot:after>
-                        <q-btn class="q-mb-sm" size="md" dense flat icon="search" />
-                      </template>
-                    </q-input>
-                    <q-item clickable v-ripple class="new-chat-item q-mb-sm" @click="showNewGroupSelect = true">
-                      <q-item-section avatar>
-                        <q-avatar color="teal" text-color="white" icon="mdi-account-group-outline" />
-                      </q-item-section>
-                      <q-item-section>New Group</q-item-section>
-                    </q-item>
-                    <div class="text-subtitle2 text-weight-light q-mb-sm q-px-md">
-                      All friends
-                    </div>
-                  </div>
-                  <div>
-                    <q-scroll-area style="height: 300px">
-                      <template v-for="user in store.loginUser.friends">
-                        <q-item clickable v-ripple class="new-chat-item q-mb-sm" v-if="store.users[user.id].displayname.includes(
-                          searchUserDisplayname
-                        )
-                          " @click="startChat(user.id)" v-close-popup>
-                          <q-item-section avatar>
-                            <q-avatar>
-                              <img :src="store.users[user.id].avatar" />
-                            </q-avatar>
-                          </q-item-section>
-
-                          <q-item-section>{{
-                            `${store.users[user.id].displayname} ${user.id == store.loginUser.id ? "(You)" : ""
-                              }`
-                          }}</q-item-section>
-                        </q-item>
-                      </template>
-                    </q-scroll-area>
-                  </div>
-                </div>
-                <div v-if="showNewGroupSelect">
-                  <div :class="{
-                    'bg-white q-pt-md q-pb-sm ': true,
-                    'bg-grey-2': groupSelectedUsersId.length > 0,
-                  }">
-                    <div class="q-mx-md" style="display: flex">
-                      <q-btn dense flat icon="mdi-arrow-left" size="md" padding="sm"
-                        @click="showNewGroupSelect = false" />
-                      <div style="display: flex; align-items: center" class="q-px-sm text-h6">
-                        New Group
-                      </div>
-                    </div>
-                    <div v-if="groupSelectedUsersId.length > 0">
-                      <div class="q-mx-md q-mb-sm q-mt-sm" style="display: flex">
-                        <q-btn round flat @click="qFileAvatarNewRoom.$el.click()">
-                          <q-avatar class="q-pa-none profilepic">
-                            <img class="profilepic__image" :src="avatarNewRoom" />
-                            <q-icon class="profilepic__content" size="20px" color="white"
-                              name="mdi-pencil-outline"></q-icon>
-                          </q-avatar>
-                        </q-btn>
-                        <q-file ref="qFileAvatarNewRoom" style="display: none" v-model="inputFileAvatarNewRoom"
-                          accept=".jpg, .png" @update:model-value="handleUploadAvatarNewRoom()"></q-file>
-                        <div style="display: flex; align-items: center" class="q-ml-md">
-                          <q-input outlined color="teal-6" bg-color="white" placeholder="Group Name" class="smaller-input"
-                            dense filled v-model="nameNewRoom">
-                          </q-input>
-                        </div>
-                      </div>
-                      <div class="truncate-chip-labels q-mb-md q-mx-md">
-                        <template v-for="(userId, index) in groupSelectedUsersId">
-                          <q-chip removable square color="teal" text-color="white" @remove="
-                            groupSelectedUsersId.value =
-                            groupSelectedUsersId.splice(index, 1)
-                            " :label="store.users[userId].displayname">
-                            <q-tooltip>{{
-                              store.users[userId].displayname
-                            }}</q-tooltip>
-                          </q-chip>
-                        </template>
-                      </div>
-                      <div style="display: flex; justify-content: flex-end" class="q-px-sm">
-                        <q-btn class="full-width bg-white shadow-1" dense no-caps unelevated
-                          @click="groupSelectedUsersId = []">
-                          Cancel
-                        </q-btn>
-                        <span class="q-mx-xs"></span>
-                        <q-btn class="bg-teal-6 text-white full-width shadow-1" dense no-caps unelevated v-close-popup
-                          @click="createGroup()">
-                          Create
-                        </q-btn>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="bg-white q-px-sm q-pb-md">
-                    <q-input outlined color="teal-6" bg-color="grey-3" placeholder="Search"
-                      class="q-mb-sm q-pl-md q-pr-md q-mt-md smaller-input" dense filled v-model="searchUserDisplayname"
-                      autofocus>
-                    </q-input>
-                    <div class="text-subtitle2 text-weight-light q-mb-sm q-px-md">
-                      All friends
-                    </div>
-
-                    <div>
-                      <q-scroll-area style="height: 300px">
-                        <template v-for="user in store.loginUser.friends">
-                          <q-item clickable v-ripple class="new-chat-item q-mb-sm" v-if="store.users[user.id].displayname.includes(
-                            searchUserDisplayname
-                          ) && user.id != store.loginUser.id
-                            ">
-                            <q-item-section avatar>
-                              <q-avatar>
-                                <img :src="store.users[user.id].avatar" />
-                              </q-avatar>
-                            </q-item-section>
-
-                            <q-item-section>{{
-                              `${store.users[user.id].displayname} ${user.id == store.loginUser.id ? "(You)" : ""
-                                }`
-                            }}</q-item-section>
-                            <q-item-section avatar>
-                              <q-checkbox v-model="groupSelectedUsersId" color="teal-6" :val="user.id" />
-                            </q-item-section>
-                          </q-item>
-                        </template>
-                      </q-scroll-area>
-                    </div>
-                  </div>
-                </div>
-              </q-menu>
-            </q-btn>
-          </div>
+          <room-add
+            :login-user="store.loginUser"
+            :users="store.users"
+            @create-group="(usersId, inputFileAvatarNewRoom, nameNewRoom) => createGroup(usersId, inputFileAvatarNewRoom, nameNewRoom)"
+          />
         </div>
 
       </q-drawer>
@@ -893,8 +704,8 @@ const style = computed(() => ({
         <q-page style="height: 1px">
           <q-scroll-area class="page-chat fit justify-center" v-if="currentRoom != null" ref="scrollArea">
             <div style="visibility: hidden">test</div>
-            <chat-window :messages="currentRoom.messages" :read-idx="currentRoom.users[store.loginUser.id].readIdx" :users="store.users"
-              :login-user-id="store.loginUser.id" @reply="(message) => setReplyMsg(message)"
+            <chat-window :messages="currentRoom.messages" :read-idx="currentRoom.users[store.loginUser.id].readIdx"
+              :users="store.users" :login-user="store.loginUser" @reply="(message) => setReplyMsg(message)"
               @send-emote="(emote, messageId) => setEmote(messageId, emote)"
               @remove-emote="(emote, messageId) => removeEmote(messageId, emote)" />
           </q-scroll-area>
@@ -1021,8 +832,9 @@ const style = computed(() => ({
               </div>
             </q-menu>
           </q-btn>
-
-          <q-input rounded borderless dense bg-color="grey-1" class="WAL__fieldMsg full-width" v-model="inputMessageText"
+          <q-input-style  :room="currentRoom" :users="store.users">
+          </q-input-style>
+          <!-- <q-input rounded borderless dense bg-color="grey-1" class="WAL__fieldMsg full-width" v-model="inputMessageText"
             placeholder="Type a message" @keydown.enter="submitMessage">
             <q-menu no-focus self="top start" anchor="bottom start" style="top: unset; bottom: 50px">
               <q-list>
@@ -1040,7 +852,7 @@ const style = computed(() => ({
 
               </q-list>
             </q-menu>
-          </q-input>
+          </q-input> -->
           <q-btn round flat icon="mic" />
         </q-toolbar>
       </q-footer>
