@@ -16,6 +16,7 @@
     "@popperjs/core": "^2.11.7",
     "@privacyresearch/libsignal-protocol-typescript": "^0.0.16",
     "@quasar/extras": "^1.0.0",
+    "@syncfusion/ej2-vue-dropdowns": "^22.2.10",
     "@vueup/vue-quill": "^1.2.0",
     "axios": "^1.3.5",
     "bcrypt": "^5.1.0",
@@ -32,6 +33,7 @@
     "emoji-picker-element": "^1.18.3",
     "express": "^4.18.2",
     "ffmpeg": "^0.0.4",
+    "floating-vue": "^2.0.0-beta.24",
     "js-cookie": "^3.0.5",
     "jsonwebtoken": "^9.0.0",
     "libsignal": "^2.0.1",
@@ -51,6 +53,7 @@
     "video-thumbnail-generator": "^1.1.3",
     "vue": "^3.0.0",
     "vue-highlightable-input": "^1.0.9",
+    "vue-mention": "^2.0.0-alpha.3",
     "vue-router": "^4.0.0",
     "vue-video-thumbnail": "^0.1.12",
     "vue3-emoji-picker": "^1.1.7"
