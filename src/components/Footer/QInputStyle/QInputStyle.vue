@@ -48,14 +48,7 @@
 </template>
 
 <script>
-import HighlightableInput from "./HighlightableInput.vue";
-import ExtentedChips from "./ExtendedChips.vue";
-import "floating-vue/dist/style.css";
 export default {
-  components: {
-    HighlightableInput,
-    ExtentedChips,
-  },
   props: {
     room: { type: Object, required: true },
     users: { type: Object, required: true },
